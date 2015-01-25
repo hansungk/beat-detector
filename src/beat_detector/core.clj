@@ -62,7 +62,7 @@
 
 (defn split-at-data-buffer
   "Clojure's 'split-at' function implemented on data buffer.
-  Returns [(split-at n left-data) (split-at n right-data)]."
+  Returns [(take-data-buffer n data-buffer) (drop-data-buffer n data-buffer)]."
   [n data-buffer]
   [(take-data-buffer n data-buffer) (drop-data-buffer n data-buffer)])
 
