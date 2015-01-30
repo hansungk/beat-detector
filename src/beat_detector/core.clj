@@ -1,12 +1,51 @@
 (ns beat-detector.core
   (:require [dynne.sampled-sound :refer :all :as dynne]))
 
-(def *sound* (dynne/read-sound "sample.wav"))
-(def *raw-data* (dynne/chunks *sound* 44100)) 
-;(def *chunk-count* (count *raw-data*))
-(def *sound-history-num* 44032)
-(def *instance-num* 1024)
-(def *energy-history-num* 43)
+(def ^:dynamic *sound* (dynne/read-sound "sample.wav"))
+(def ^:dynamic *raw-data* (dynne/chunks *sound* 44100))
+(def ^:dynamic *sound-history-num* 44032)
+(def ^:dynamic *instance-num* 1024)
+(def ^:dynamic *energy-history-num* 43)
+(def ^:dynamic *chunk-size* 10000)
+
+(declare take-data drop-data conj-data split-at-data drop-raw)
+(declare take-raw-recur)
+(defn take-raw
+  "Takes n data from chunked raw data and makes them into one sound data."
+  [n raw]
+  (take-raw-recur [] n raw))
+
+(defn take-raw-recur
+  "Helper function for take-raw.
+  Carries so-far-taken data and recurs until enoughly consumed."
+  [taken n raw]
+  (let [head (first raw)
+        m (count (first head))]
+    (cond ; Check if first chunk is enough
+      (>= m n) (let [new-taken (take-data n head)]
+                 [(conj-data taken new-taken) (rest raw)])
+      (< m n)  (recur (conj-data taken head) (- n m) (drop-raw m raw)))))
+
+(defn drop-raw
+  "Drops n datas from chunked raw data.
+  Removes whole chunk when a chunk gets depleted."
+  [n raw]
+  (let [[data new-head] (split-at-data n (first raw))
+        taken (count (first data))]
+    (if (empty? (first new-head))
+      (if (< taken n)
+        (recur (- n taken) (rest raw))
+        (rest raw))
+      (conj (rest raw) new-head))))
+
+(defn conj-data
+  "Conjoins two sound data into one."
+  [data1 data2]
+  (let [left1 (vec (first data1))
+        left2 (vec (first data2))
+        right1 (vec (second data1))
+        right2 (vec (second data2))]
+    [(into left1 left2) (into right1 right2)]))
 
 (defn fill-data-buffer
   "Returns a vector of [buffer rest-raw], where buffer is the new data
@@ -19,52 +58,23 @@
       (recur (map into buffer (first raw)) (rest raw) n)
       [buffer raw])))
 
-(defn fill-data-buffer-pos
-  "A version of fill-data-buffer that uses position value in the song,
-  rather than passing raw data.
-  Conclusion: little-to-no performance difference."
-  [buffer pos n]
-  (if (>= pos *chunk-count*) ; Check if reached end of song; pos starts from 0
-    [buffer pos]
-    (if (< (count (first buffer)) n) ; Check if buffer is already filled enough (fake call)
-      (recur (map into buffer (nth *raw-data* pos)) (inc pos) n)
-      [buffer pos])))
-
-;(defn next-energy-buffer
-;  "Returns a sound energy histroy buffer." ; TODO
-;  [old-buffer data-buffer instance-num history-num]
-;  (if (empty? old-buffer) ; Needs to be constructed from scratch
-;    (recur (conj old-buffer energy) (drop-data-buffer intance-num data-buffer) instance-num history-num)
-;    (if (= (count old-buffer) instance-num) ; Check if old-buffer is now an 'whole' buffer
-;      )))
-
-(defn- initial-energy-buffer
-  "Constructs a new energy buffer from scratch and returns it."
-  [data-buffer instance-num history-num]
-  (loop [buf '()
-         data-buf data-buffer]
-    (if (< (count (first data-buf)) instance-num) ; Check if data-buffer is shorter than instance-num; that is all consumed
-      [buf data-buf]
-      (let [[data-cons data-new] (split-at-data-buffer instance-num data-buf)]
-        (recur (conj buf (sound-energy data-cons)) data-new)))))
-
-(defn take-data-buffer
-  "Clojure's 'take' function implemented on data buffer.
+(defn take-data
+  "Clojure's 'take' function implemented on sound data.
   Returns [(take n left-data) (take n right-data)]."
-  [n data-buffer]
-  (mapv (fn [x] (take n x)) data-buffer))
+  [n data]
+  (mapv (fn [x] (take n x)) data))
 
-(defn drop-data-buffer
-  "Clojure's 'drop' function implemented on data buffer.
+(defn drop-data
+  "Clojure's 'drop' function implemented on sound data.
   Returns [(drop n left-data) (drop n right-data)]."
-  [n data-buffer]
-  (mapv (fn [x] (drop n x)) data-buffer))
+  [n data]
+  (mapv (fn [x] (drop n x)) data))
 
-(defn split-at-data-buffer
-  "Clojure's 'split-at' function implemented on data buffer.
-  Returns [(take-data-buffer n data-buffer) (drop-data-buffer n data-buffer)]."
-  [n data-buffer]
-  [(take-data-buffer n data-buffer) (drop-data-buffer n data-buffer)])
+(defn split-at-data
+  "Clojure's 'split-at' function implemented on sound data.
+  Returns [(take-data n data) (drop-data n data)]."
+  [n data]
+  [(take-data n data) (drop-data n data)])
 
 (defn average-local-energy
   "Returns average energy from the given energy-buffer
@@ -79,6 +89,16 @@
   (let [left (first data)
         right (second data)]
     (reduce + (map (fn [x y] (+ (* x x) (* y y))) left right))))
+
+(defn- initial-energy-buffer
+  "Constructs a new energy buffer from scratch and returns it."
+  [data-buffer instance-num history-num]
+  (loop [buf '()
+         data-buf data-buffer]
+    (if (< (count (first data-buf)) instance-num) ; Check if data-buffer is shorter than instance-num; that is all consumed
+      [buf data-buf]
+      (let [[data-cons data-new] (split-at-data instance-num data-buf)]
+        (recur (conj buf (sound-energy data-cons)) data-new)))))
 
 (defn energy-variance
   "Returns the variance of the energies from the given energy-buffer
