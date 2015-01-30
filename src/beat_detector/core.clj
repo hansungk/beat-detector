@@ -44,7 +44,9 @@
   "Clojure's 'take' function implemented on sound data.
   Returns [(take n left-data) (take n right-data)]."
   [n data]
-  (mapv (fn [x] (take n x)) data))
+  (if (>= 0 n)
+    []
+    (mapv (fn [x] (vec (take n x))) data)))
 
 (defn drop-data
   "Clojure's 'drop' function implemented on sound data.
