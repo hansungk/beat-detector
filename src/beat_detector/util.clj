@@ -60,28 +60,3 @@
         right1 (vec (second data1))
         right2 (vec (second data2))]
     [(into left1 left2) (into right1 right2)]))
-
-(defn fill-data-buffer
-  "Returns a vector of [buffer rest-raw], where buffer is the new data
-  buffer newly filled with just enough (>=n) sound datas, and rest-raw
-  is the new raw data with its old contents at the front dropped."
-  [buffer raw n]
-  (if (empty? raw) ; Check if reached end of song
-    [buffer raw]
-    (if (< (count (first buffer)) n) ; Check if buffer is already filled enough (fake call)
-      (recur (map into buffer (first raw)) (rest raw) n)
-      [buffer raw])))
-
-(defn average-local-energy
-  "Returns average energy from the given energy-buffer
-  (default 43-length)."
-  [energy-buffer])
-
-(defn sound-energy
-  "Returns the total sound energy of the 2-channel data.
-  Sound energy is calculated by sum square of the amplitude of each
-  channel."
-  [data]
-  (let [left (first data)
-        right (second data)]
-    (reduce + (map (fn [x y] (+ (* x x) (* y y))) left right))))
