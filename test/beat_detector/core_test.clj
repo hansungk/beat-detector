@@ -11,6 +11,8 @@
 
 (deftest take-raw-test
   (testing "take-raw test"
+    (testing "when n is zero"
+      (is (= (first (core/take-raw 0 '(([1 2 3 4] [1 2 3 4]) ([5 6 7 8] [5 6 7 8]))))  [])))
     (testing "when n is smaller than chunk size"
       (is (= (first (core/take-raw 3 '(([1 2 3 4] [1 2 3 4]) ([5 6 7 8] [5 6 7 8]))))  [[1 2 3] [1 2 3]]))))
     (testing "when n is larger than chunk size"
