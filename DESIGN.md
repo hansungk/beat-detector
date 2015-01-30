@@ -15,7 +15,14 @@ History buffer  <-  Raw sample data
 
 Call a func with buffer -> func returns beat detection result -> call func again with updated hist buffer
 
-# Performance
+## Performance
 
 * into : Vector > Cons
 * From Java array conversion : Seq == List > Lazy-seq > Vector
+
+## Simple BD algorithm
+
+* Concept of data buffer is not good
+* Should "data queue" really be used?
+* Need a more elegant way to store sound datas (look core-test.clj)
+* Need a more elegant way of adjoining chunked raw datas without sacrificing performance
