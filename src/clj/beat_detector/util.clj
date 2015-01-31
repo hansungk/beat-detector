@@ -2,7 +2,8 @@
 
 (declare take-raw-recur)
 (defn take-raw
-  "Takes n data from chunked raw data and makes them into one sound data."
+  "Takes n data from chunked raw data and makes them into one sound data.
+  Returns resulting data and remaining raw."
   [n raw]
   (take-raw-recur [] n raw))
 
@@ -15,22 +16,23 @@
         m (count (first head))]
     (cond ; Check if first chunk is enough
       (>= 0 n) [[] raw]
+      (>= 0 m) [taken raw]
       (>= m n) (let [new-taken (take-data n head)]
-                 [(conj-data taken new-taken) (rest raw)])
+                 [(conj-data taken new-taken) (drop-raw n raw)])
       (< m n)  (recur (conj-data taken head) (- n m) (drop-raw m raw)))))
 
-(declare split-at-data)
+(declare drop-data)
 (defn drop-raw
   "Drops n datas from chunked raw data.
   Removes whole chunk when a chunk gets depleted."
   [n raw]
-  (let [[data new-head] (split-at-data n (first raw))
-        taken (count (first data))]
-    (if (empty? (first new-head))
-      (if (< taken n)
-        (recur (- n taken) (rest raw))
-        (rest raw))
-      (conj (rest raw) new-head))))
+  (let [head (first raw)
+        m (count (first head))]
+    (cond ; Check if first chunk is enough
+          (or (>= 0 n) (>= 0 m)) raw
+          (> m n) (let [new-head (drop-data n head)]
+                    (conj (rest raw) new-head))
+          (<= m n) (recur (- n m) (rest raw)))))
 
 (defn take-data
   "Clojure's 'take' function implemented on sound data.
@@ -44,7 +46,9 @@
   "Clojure's 'drop' function implemented on sound data.
   Returns [(drop n left-data) (drop n right-data)]."
   [n data]
-  (mapv (fn [x] (drop n x)) data))
+  (if (<= (count (first data)) n)
+    []
+    (mapv (fn [x] (drop n x)) data)))
 
 (defn split-at-data
   "Clojure's 'split-at' function implemented on sound data.

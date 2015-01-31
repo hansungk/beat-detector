@@ -9,12 +9,16 @@
   *energy-history-num*/*instance-num* new energy value from raw."
   [buffer raw])
 
-(defn- generate-energy-buffer
+(declare sound-energy)
+(defn generate-energy-buffer
   "Generates new energy buffer of length
   *energy-history-num*/*instance-num*, extracted from raw."
   [raw n-inst n-hist]
-  (let [sound-buf (take-raw n-hist raw)]))
-
+  (loop [buf [] raw' raw n (/ n-hist n-inst)]
+    (if (> n 0)
+      (let [energy (sound-energy (first (take-raw n-inst raw')))]
+        (recur (conj buf energy) (drop-raw n-inst raw') (dec n)))
+      buf)))
 
 (defn energy-variance
   "Returns the variance of the energies from the given energy-buffer
