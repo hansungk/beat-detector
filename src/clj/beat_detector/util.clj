@@ -64,3 +64,8 @@
         right1 (vec (second data1))
         right2 (vec (second data2))]
     [(into left1 left2) (into right1 right2)]))
+
+(defn average
+  "Calculates average value from the given coll."
+  [coll]
+  (double (/ (apply + coll) (count coll))))

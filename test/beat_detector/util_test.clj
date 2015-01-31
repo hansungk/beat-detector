@@ -34,3 +34,6 @@
       (is (= (util/drop-raw 8 [[[1 2 3 4] [1 2 3 4]] [[5 6 7 8] [5 6 7 8]]]) [])))
     (testing "when n is larger than size of raw"
       (is (= (util/drop-raw 9 [[[1 2 3 4] [1 2 3 4]] [[5 6 7 8] [5 6 7 8]]]) [])))))
+
+(deftest average-test
+  (is (= (average [1.9 3 4 5 6.1]) 4.0)))

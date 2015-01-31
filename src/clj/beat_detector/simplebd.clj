@@ -24,28 +24,6 @@
         (recur (conj buf energy) (drop-raw n-inst raw') (dec n)))
       buf)))
 
-(defn energy-variance
-  "Returns the variance of the energies from the given energy-buffer
-  (default 43-length)."
-  [energy-buffer])
-
-(defn peak-threshold-factor
-  "Returns the factor threshold for an energy peak to be detected as a
-  beat, which is determined by the local variance energy-variance of
-  sound energy."
-  [energy-variance])
-
-(defn determine-beat
-  "Returns whether the instance is determined as a beat, which is held
-  by examining the factor between the energy of local peak and that of
-  local average."
-  [instant-energy average-local-energy threshold-factor])
-
-(defn average-local-energy
-  "Returns average energy from the given energy-buffer
-  (default 43-length)."
-  [energy-buffer])
-
 (defn sound-energy
   "Returns the total sound energy of the 2-channel data.
   Sound energy is calculated by sum square of the amplitude of each
@@ -54,3 +32,29 @@
   (let [left (first data)
         right (second data)]
     (reduce + (map (fn [x y] (+ (* x x) (* y y))) left right))))
+
+(defn energy-variance
+  "Returns the variance of the energies from the given buffer
+  (default 43-length)."
+  [buffer]
+  (let [avg (average buffer)]
+    (average (map (fn [x] (* (- x avg) (- x avg))) buffer))))
+
+(defn peak-threshold-factor
+  "Returns C, the factor threshold for an energy peak to be detected as
+  a beat, which is determined by the variance of sound energy."
+  [variance]
+  (+ 1.5142857 (* -0.0025714 variance)))
+
+(defn determine-beat
+  "Given energy-buffer, determines wither the target instance is a beat,
+  which is held by examining the factor between the energy of local peak
+  and that of local average."
+  [buffer]
+  (let [C (peak-threshold-factor (energy-variance buffer))
+        E (average buffer)]
+    (> (peek buffer) (* C E)))) ; FIXME WRONG!!!
+
+(defn trigger
+  [raw n-inst n-hist]
+  (gen-energy-buffer raw n-inst n-hist))
