@@ -3,14 +3,16 @@
 
 (declare sound-energy)
 (defn next-energy-buffer
-  "Refreshes energy buffer and returns it.
-  If buffer is populated, 'shift' data 1 index to the left and conj
-  new energy value from raw at the right end (as per vector).
-  If buffer is empty, populate it with
-  *energy-history-num*/*instance-num* new energy value from raw."
+  "Refreshes energy buffer and returns it. buffer should not be empty.
+  'Shift' data 1 index to the left and conj new energy value from raw
+  at the right end (as per vector).
+  When there is no more remaining raw, it will append zeros, which
+  would never falsely be detected as beats."
   [buffer raw n-inst]
-  (let [energy (sound-energy (take-raw n-inst raw))]
-    (conj (vec (rest buffer)) energy)))
+  (if (empty? buffer)
+    nil   ; FIXME is this necessary?
+    (let [energy (sound-energy (take-raw n-inst raw))]
+      (conj (vec (rest buffer)) energy))))
 
 (defn gen-energy-buffer
   "Generates new energy buffer of length
