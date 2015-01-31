@@ -1,22 +1,24 @@
 (ns beat-detector.simplebd
   (:use [beat-detector.util]))
 
+(declare sound-energy)
 (defn next-energy-buffer
   "Refreshes energy buffer and returns it.
   If buffer is populated, 'shift' data 1 index to the left and conj
   new energy value from raw at the right end (as per vector).
   If buffer is empty, populate it with
   *energy-history-num*/*instance-num* new energy value from raw."
-  [buffer raw])
+  [buffer raw n-inst]
+  (let [energy (sound-energy (take-raw n-inst raw))]
+    (conj (vec (rest buffer)) energy)))
 
-(declare sound-energy)
-(defn generate-energy-buffer
+(defn gen-energy-buffer
   "Generates new energy buffer of length
   *energy-history-num*/*instance-num*, extracted from raw."
   [raw n-inst n-hist]
   (loop [buf [] raw' raw n (/ n-hist n-inst)]
     (if (> n 0)
-      (let [energy (sound-energy (first (take-raw n-inst raw')))]
+      (let [energy (sound-energy (take-raw n-inst raw'))]
         (recur (conj buf energy) (drop-raw n-inst raw') (dec n)))
       buf)))
 

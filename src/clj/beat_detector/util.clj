@@ -3,7 +3,7 @@
 (declare take-raw-recur)
 (defn take-raw
   "Takes n data from chunked raw data and makes them into one sound data.
-  Returns resulting data and remaining raw."
+  Returns resulting data."
   [n raw]
   (take-raw-recur [] n raw))
 
@@ -15,10 +15,10 @@
   (let [head (first raw)
         m (count (first head))]
     (cond ; Check if first chunk is enough
-      (>= 0 n) [[] raw]
-      (>= 0 m) [taken raw]
+      (>= 0 n) []
+      (>= 0 m) taken
       (>= m n) (let [new-taken (take-data n head)]
-                 [(conj-data taken new-taken) (drop-raw n raw)])
+                 (conj-data taken new-taken))
       (< m n)  (recur (conj-data taken head) (- n m) (drop-raw m raw)))))
 
 (declare drop-data)
