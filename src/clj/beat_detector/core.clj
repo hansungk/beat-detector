@@ -9,6 +9,13 @@
 (def ^:dynamic *energy-history-num* 43)
 (def ^:dynamic *chunk-size* 10000)
 
+; A Packet is a bundle data that contains all the necessary informations
+; that it can be immediately processed by beat detection; i.e. current
+; energy history buffer, raw datas that appends those stored in energy
+; buffer, num of samples in one instance, and num of samples in one
+; sound history buffer.
+(defrecord Packet [buffer raw n-inst n-hist])
+
 (defn core
   []
   (simplebd/trigger *raw-data* *instance-num* *sound-history-num*))

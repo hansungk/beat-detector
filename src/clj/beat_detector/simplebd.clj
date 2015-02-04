@@ -4,10 +4,9 @@
 (declare sound-energy)
 (defn next-energy-buffer
   "Refreshes energy buffer and returns it. buffer should not be empty.
-  'Shift' data 1 index to the left and conj new energy value from raw
-  at the right end (as per vector).
-  When there is no more remaining raw, it will append zeros, which
-  would never falsely be detected as beats."
+  'Shift' data 1 index to the left and conj new energy value from raw at
+  the right end (as per vector).  When there is no more remaining raw,
+  it appends zeros, which would never be falsely detected as beats."
   [buffer raw n-inst]
   (if (empty? buffer)
     nil   ; FIXME is this necessary?
@@ -44,7 +43,8 @@
   "Returns C, the factor threshold for an energy peak to be detected as
   a beat, which is determined by the variance of sound energy."
   [variance]
-  (+ 1.5142857 (* -0.0025714 variance)))
+  (comment (+ 1.5142857 (* -0.0025714 variance)))
+  1.3) ; FIXME the formula doesn't work well
 
 (defn determine-beat
   "Given energy-buffer, determines wither the target instance is a beat,
@@ -53,7 +53,25 @@
   [buffer]
   (let [C (peak-threshold-factor (energy-variance buffer))
         E (average buffer)]
-    (> (peek buffer) (* C E)))) ; FIXME WRONG!!!
+    (> (peek buffer) (* C E))))
+
+(defn prepare
+  "Prepares the first Packet to trigger detection.
+  Essentially generates the first ever energy buffer from raw."
+  [packet]
+  (let [{raw :raw n-inst :n-inst n-hist :n-hist} packet
+        new-buffer (gen-energy-buffer raw n-inst n-hist)
+        rest-raw (drop-raw n-hist raw)]
+    (assoc packet :buffer new-buffer :raw rest-raw)))
+
+(defn update
+  "Updates Packet and prepares it for the next processing step.
+  Essentially calls next-energy-buffer and consumes raw by one instance."
+  [packet]
+  (let [{buffer :buffer raw :raw n-inst :n-inst} packet
+        next-buffer (next-energy-buffer buffer raw n-inst)
+        rest-raw (drop-raw n-inst raw)]
+    (assoc packet :buffer next-buffer :raw rest-raw)))
 
 (defn trigger
   [raw n-inst n-hist]

@@ -42,13 +42,13 @@
     []
     (mapv (fn [x] (vec (take n x))) data)))
 
-(defn drop-data
+(defn drop-data ; FIXME The channels become lists, not vectors
   "Clojure's 'drop' function implemented on sound data.
   Returns [(drop n left-data) (drop n right-data)]."
   [n data]
   (if (<= (count (first data)) n)
     []
-    (mapv (fn [x] (drop n x)) data)))
+    (mapv (fn [x] (vec (drop n x))) data)))
 
 (defn split-at-data
   "Clojure's 'split-at' function implemented on sound data.
