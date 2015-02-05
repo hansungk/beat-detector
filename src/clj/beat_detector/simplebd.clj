@@ -43,36 +43,60 @@
   "Returns C, the factor threshold for an energy peak to be detected as
   a beat, which is determined by the variance of sound energy."
   [variance]
-  (comment (+ 1.5142857 (* -0.0025714 variance)))
-  1.3) ; FIXME the formula doesn't work well
+  (comment (+ 1.5142857 (* -0.0025714 variance))) ; FIXME the formula doesn't work well
+  1.3)
 
 (defn determine-beat
   "Given energy-buffer, determines wither the target instance is a beat,
   which is held by examining the factor between the energy of local peak
   and that of local average."
-  [buffer]
-  (let [C (peak-threshold-factor (energy-variance buffer))
+  [packet]
+  (let [buffer (:buffer packet)
+        C (peak-threshold-factor (energy-variance buffer))
         E (average buffer)]
     (> (peek buffer) (* C E))))
 
-(defn prepare
-  "Prepares the first Packet to trigger detection.
-  Essentially generates the first ever energy buffer from raw."
+(defn initialize
+  "Factory function that returns an initialized Packet."
   [packet]
   (let [{raw :raw n-inst :n-inst n-hist :n-hist} packet
         new-buffer (gen-energy-buffer raw n-inst n-hist)
         rest-raw (drop-raw n-hist raw)]
-    (assoc packet :buffer new-buffer :raw rest-raw)))
+    (assoc packet :buffer new-buffer :raw rest-raw :pos (/ n-hist n-inst))))
 
-(defn update
-  "Updates Packet and prepares it for the next processing step.
-  Essentially calls next-energy-buffer and consumes raw by one instance."
+(defn reload
+  "Reloads buffer of packet with new energy value of 1024 samples from
+  raw, preparing the packet for the next processing step."
   [packet]
-  (let [{buffer :buffer raw :raw n-inst :n-inst} packet
+  (let [{buffer :buffer raw :raw n-inst :n-inst pos :pos} packet
         next-buffer (next-energy-buffer buffer raw n-inst)
         rest-raw (drop-raw n-inst raw)]
-    (assoc packet :buffer next-buffer :raw rest-raw)))
+    (assoc packet :buffer next-buffer :raw rest-raw :pos (inc pos))))
 
-(defn trigger
-  [raw n-inst n-hist]
-  (gen-energy-buffer raw n-inst n-hist))
+(defn process
+  "Processes given initialized packet and returns detection result.
+  result is a vector that consists of indices of beat-detected
+  instances"
+  [packet result]
+  (if (empty? (:raw packet)) ; If raw is depleted, stop processing
+    result
+    (if (determine-beat packet)
+      (recur (reload packet) (conj result (:pos packet)))
+      (recur (reload packet) result))))
+
+(defn trim-adjacent
+  "Removes adjacent numbers from given numbers vector.
+  Only leaves the head of each adjacencies."
+  [coll]
+  (reduce (fn [xs y]
+            (if (empty? xs)
+              [y]
+              (if (> (- y (last xs)) 5)
+                (conj xs y)
+                xs))) [] coll))
+; [1 2 3 5 6 8 9 10]
+
+(defn start
+  "Starts simple beat detection algorithm using the given Packet data."
+  [packet]
+  (trim-adjacent (process (initialize packet) [])))

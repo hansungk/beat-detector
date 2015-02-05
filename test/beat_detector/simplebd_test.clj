@@ -35,24 +35,39 @@
            nil))))
 
 
-(deftest prepare-test
+(deftest initialize-test
   (testing "general"
-    (let [packet (core/->Packet nil *raw* 2 6)]
-      (is (= (take 2 (vals (prepare packet)))
-             '([5 25 61] ([[7 8] [0 0]]))))))
+    (let [packet (core/->Packet nil *raw* 0 2 6)
+          {buffer :buffer raw :raw pos :pos} (initialize packet)]
+      (is (= buffer [5 25 61]))
+      (is (= raw '([[7 8] [0 0]])))
+      (is (= pos 1))))
   (testing "when raw is completely consumed"
-    (let [packet (core/->Packet nil *raw* 2 8)]
-      (is (= (take 2 (vals (prepare packet)))
+    (let [packet (core/->Packet nil *raw* 0 2 8)]
+      (is (= (take 2 (vals (initialize packet)))
              '([5 25 61 113] ()))))))
 
-(deftest update-test
+(deftest reload-test
   (testing "general"
-      (let [packet (prepare (core/->Packet nil *raw* 2 4))
-            {buffer :buffer raw :raw} (update packet)]
+      (let [packet (initialize (core/->Packet nil *raw* 0 2 4))
+            {buffer :buffer raw :raw pos :pos} (reload packet)]
         (is (= buffer [25 61]))
-        (is (= raw '([[7 8] [0 0]])))))
+        (is (= raw '([[7 8] [0 0]])))
+        (is (= pos 2))))
   (testing "when raw depletes on update"
-      (let [packet (prepare (core/->Packet nil *raw* 2 6))
-            {buffer :buffer raw :raw} (update packet)]
+      (let [packet (initialize (core/->Packet nil *raw* 0 2 6))
+            {buffer :buffer raw :raw pos :pos} (reload packet)]
         (is (= buffer [25 61 113]))
-        (is (= raw '())))))
+        (is (= raw '()))
+        (is (= pos 2)))))
+
+(def ^:dynamic *rawl* '(([1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 11] [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 11]) ([1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 11] [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 11])))
+
+(def ^:dynamic *p* (core/->Packet nil *rawl* nil 1 2))
+
+(deftest start-test
+  (testing "duration"
+    (let [initial (initialize *p*)
+          result (start *p*)]
+      (is (= initial nil))
+      (is (= result nil)))))
