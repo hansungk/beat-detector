@@ -30,7 +30,7 @@
   [data]
   (let [left (first data)
         right (second data)]
-    (reduce + (map (fn [x y] (+ (* x x) (* y y))) left right))))
+    (apply + (map (fn [x y] (+ (* x x) (* y y))) left right))))
 
 (defn energy-variance
   "Returns the variance of the energies from the given buffer
@@ -43,8 +43,9 @@
   "Returns C, the factor threshold for an energy peak to be detected as
   a beat, which is determined by the variance of sound energy."
   [variance]
-  (comment (+ 1.5142857 (* -0.0025714 variance))) ; FIXME the formula doesn't work well
-  1.3)
+  (comment (+ 1.5142857 (* -0.0025714 variance))) ; FIXME this doesn't work well
+  1.3
+  )
 
 (defn determine-beat
   "Given energy-buffer, determines wither the target instance is a beat,
@@ -94,7 +95,6 @@
               (if (> (- y (last xs)) 5)
                 (conj xs y)
                 xs))) [] coll))
-; [1 2 3 5 6 8 9 10]
 
 (defn start
   "Starts simple beat detection algorithm using the given Packet data."

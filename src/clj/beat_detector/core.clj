@@ -2,7 +2,7 @@
   (:require [dynne.sampled-sound :refer :all :as dynne]
             [beat-detector.simplebd :refer :all :as simplebd]))
 
-(def ^:dynamic *sound* (dynne/read-sound "sample-medium.wav"))
+(def ^:dynamic *sound* (dynne/read-sound "foofighters.wav"))
 (def ^:dynamic *raw-data* (dynne/chunks *sound* 44100))
 (def ^:dynamic *sound-history-num* 44032)
 (def ^:dynamic *instance-num* 1024)
@@ -19,23 +19,31 @@
 (defrecord Packet [buffer raw pos n-inst n-hist])
 
 (defn times->clicks
+  "Converts a vector of beat timestamps to dynne sound objects.
+  Clicks are 840Hz sinusoidal waves of 0.01sec duration."
   [times]
   (map (partial dynne/timeshift *click*) times))
 
 (defn instances->times
+  "Converts a vector of beat instance indices to the real time.
+  The time is when the beat starts."
   [instances]
   (map (fn [x] (* (/ *instance-num* 44100) (dec x))) instances))
 
 (defn simplebd
+  "Executes simple beat detection algorithm on the given sound source."
   []
   (let [packet (->Packet nil *raw-data* nil *instance-num* *sound-history-num*)]
     (simplebd/start packet)))
 
 (defn clicks
+  "Returns dynne sound objects that contains clicks that sync with detected
+  beats."
   []
   (reduce dynne/mix (times->clicks (instances->times (simplebd)))))
 
 (defn save-clicks
+  "Save clicks object into wav file named clicks.wav."
   []
   (dynne/save (clicks) "clicks.wav" 44100))
 
