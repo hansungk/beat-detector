@@ -44,7 +44,7 @@
   a beat, which is determined by the variance of sound energy."
   [variance]
   (comment (+ 1.5142857 (* -0.0025714 variance))) ; FIXME this doesn't work well
-  1.3
+  1.2
   )
 
 (defn determine-beat

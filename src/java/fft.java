@@ -53,7 +53,7 @@ public class FFT {
 		//       cos[n/2+i] = -cos[i];
 		//       sin[n*3/4-i] = -cos[i];
 		//       cos[n-i]   = cos[i];
-		//       sin[n*3/4+i] = -cos[i];        
+		//       sin[n*3/4+i] = -cos[i];
 		//     }
 
 		for(int i=0; i<n/2; i++) {
@@ -69,7 +69,7 @@ public class FFT {
 		// w(n)=0.42-0.5cos{(2*PI*n)/(N-1)}+0.08cos{(4*PI*n)/(N-1)};
 		window = new double[n];
 		for(int i = 0; i < window.length; i++)
-			window[i] = 0.42 - 0.5 * Math.cos(2*Math.PI*i/(n-1)) 
+			window[i] = 0.42 - 0.5 * Math.cos(2*Math.PI*i/(n-1))
 				+ 0.08 * Math.cos(4*Math.PI*i/(n-1));
 	}
 
@@ -80,22 +80,22 @@ public class FFT {
 
 	/***************************************************************
 	 * fft.c
-	 * Douglas L. Jones 
-	 * University of Illinois at Urbana-Champaign 
-	 * January 19, 1992 
+	 * Douglas L. Jones
+	 * University of Illinois at Urbana-Champaign
+	 * January 19, 1992
 	 * http://cnx.rice.edu/content/m12016/latest/
-	 * 
-	 *   fft: in-place radix-2 DIT DFT of a complex input 
-	 * 
-	 *   input: 
-	 * n: length of FFT: must be a power of two 
-	 * m: n = 2**m 
-	 *   input/output 
-	 * x: double array of length n with real part of data 
-	 * y: double array of length n with imag part of data 
-	 * 
-	 *   Permission to copy and use this program is granted 
-	 *   as long as this header is included. 
+	 *
+	 *   fft: in-place radix-2 DIT DFT of a complex input
+	 *
+	 *   input:
+	 * n: length of FFT: must be a power of two
+	 * m: n = 2**m
+	 *   input/output
+	 * x: double array of length n with real part of data
+	 * y: double array of length n with imag part of data
+	 *
+	 *   Permission to copy and use this program is granted
+	 *   as long as this header is included.
 	 ****************************************************************/
 	public void fft(double[] x, double[] y)
 	{
@@ -148,7 +148,7 @@ public class FFT {
 				}
 			}
 		}
-	}                          
+	}
 
 
 

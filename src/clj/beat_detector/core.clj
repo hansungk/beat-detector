@@ -2,7 +2,7 @@
   (:require [dynne.sampled-sound :refer :all :as dynne]
             [beat-detector.simplebd :refer :all :as simplebd]))
 
-(def ^:dynamic *sound* (dynne/read-sound "foofighters.wav"))
+(def ^:dynamic *sound* (dynne/read-sound "squreone.wav"))
 (def ^:dynamic *raw-data* (dynne/chunks *sound* 44100))
 (def ^:dynamic *sound-history-num* 44032)
 (def ^:dynamic *instance-num* 1024)
