@@ -3,9 +3,10 @@
 
 (defn next-energy-buffer
   "Refreshes energy buffer and returns it. buffer should not be empty.
-  'Shift' data 1 index to the left and conj new energy value from raw at
-  the right end (as per vector).  When there is no more remaining raw,
-  it appends zeros, which would never be falsely detected as beats."
+  It will shift data 1 index to the left and conj new energy value from
+  raw at the right end (as per vector). When there is no more remaining
+  raw, it appends zeros, which would never be falsely detected as
+  beats."
   [buffer raw n-inst]
   (if (empty? buffer)
     nil   ; FIXME is this necessary?
@@ -13,13 +14,15 @@
       (conj (vec (rest buffer)) energy))))
 
 (defn gen-energy-buffer
-  "Generates new energy buffer of length
-  *energy-history-num*/*instance-num*, extracted from raw."
+  "Generates new energy buffer of length n-hist/n-inst from raw. raw
+  remains intact."
   [raw n-inst n-hist]
   (loop [buf [] raw' raw n (/ n-hist n-inst)]
     (if (> n 0)
       (let [energy (sound-energy (take-raw n-inst raw'))]
-        (recur (conj buf energy) (drop-raw n-inst raw') (dec n)))
+        (recur (conj buf energy)
+               (drop-raw n-inst raw')
+               (dec n)))
       buf)))
 
 (defn peak-threshold-factor
