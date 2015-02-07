@@ -69,3 +69,25 @@
   "Calculates average value from the given coll."
   [coll]
   (double (/ (apply + coll) (count coll))))
+
+(defn variance-avg
+  "Returns the variance of the energies from the given buffer
+  (default 43-length)."
+  [buffer]
+  (let [avg (average buffer)]
+    (average (map (fn [x] (* (- x avg) (- x avg))) buffer))))
+
+(defn sumsq
+  "Calculate sum square of two numbers."
+  [x y]
+  (+ (* x x) (* y y)))
+
+(defn sound-energy
+  "Returns the total sound energy of the 2-channel data.
+  Sound energy is calculated by sum square of the amplitude of each
+  channel."
+  [data]
+  (let [left (first data)
+        right (second data)]
+    (apply + (map sumsq left right))))
+

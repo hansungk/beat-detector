@@ -3,10 +3,6 @@
   (:require [clojure.test :refer :all]
             [beat-detector.core :only ->Packet :as core]))
 
-(deftest sound-energy-test
-  (is (= (sound-energy [[3 5] [4 12]]) (+ 25 169)))
-  (is (= (sound-energy []) 0)))
-
 (def ^:dynamic *raw* '(([1 2 3 4] [0 0 0 0]) ([5 6 7 8] [0 0 0 0])))
 
 (deftest gen-energy-buffer-test

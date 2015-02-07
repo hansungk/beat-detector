@@ -1,7 +1,6 @@
 (ns beat-detector.simplebd
   (:use [beat-detector.util]))
 
-(declare sound-energy)
 (defn next-energy-buffer
   "Refreshes energy buffer and returns it. buffer should not be empty.
   'Shift' data 1 index to the left and conj new energy value from raw at
@@ -23,22 +22,6 @@
         (recur (conj buf energy) (drop-raw n-inst raw') (dec n)))
       buf)))
 
-(defn sound-energy
-  "Returns the total sound energy of the 2-channel data.
-  Sound energy is calculated by sum square of the amplitude of each
-  channel."
-  [data]
-  (let [left (first data)
-        right (second data)]
-    (apply + (map (fn [x y] (+ (* x x) (* y y))) left right))))
-
-(defn energy-variance
-  "Returns the variance of the energies from the given buffer
-  (default 43-length)."
-  [buffer]
-  (let [avg (average buffer)]
-    (average (map (fn [x] (* (- x avg) (- x avg))) buffer))))
-
 (defn peak-threshold-factor
   "Returns C, the factor threshold for an energy peak to be detected as
   a beat, which is determined by the variance of sound energy."
@@ -53,7 +36,7 @@
   and that of local average."
   [packet]
   (let [buffer (:buffer packet)
-        C (peak-threshold-factor (energy-variance buffer))
+        C (peak-threshold-factor (variance-avg buffer))
         E (average buffer)]
     (> (peek buffer) (* C E))))
 
@@ -77,7 +60,7 @@
 (defn process
   "Processes given initialized packet and returns detection result.
   result is a vector that consists of indices of beat-detected
-  instances"
+  instances."
   [packet result]
   (if (empty? (:raw packet)) ; If raw is depleted, stop processing
     result
@@ -97,6 +80,6 @@
                 xs))) [] coll))
 
 (defn start
-  "Starts simple beat detection algorithm using the given Packet data."
+  "Starts simple beat detection algorithm using given Packet data."
   [packet]
   (trim-adjacent (process (initialize packet) [])))

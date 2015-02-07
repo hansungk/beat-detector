@@ -6,5 +6,6 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.craigandera/dynne "0.4.1"]]
   :source-paths ["src/clj"]
+  :java-source-paths ["src/java"]
   :profiles {:dev {:source-paths ["dev"]
                    :dependencies [[org.clojure/tools.namespace "0.2.9"]]}})

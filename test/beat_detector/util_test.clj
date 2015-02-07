@@ -47,3 +47,14 @@
 
 (deftest average-test
   (is (= (average [1.9 3 4 5 6.1]) 4.0)))
+
+(deftest variance-avg-test
+  (is (= (variance-avg [1 3 5 7 9]) (double (/ (+ 16 4 4 16) 5)))))
+
+(deftest sumsq-test
+  (is (= (sumsq 3 4) 25)))
+
+(deftest sound-energy-test
+  (is (= (sound-energy [[3 5] [4 12]]) (+ 25 169)))
+  (is (= (sound-energy []) 0)))
+
