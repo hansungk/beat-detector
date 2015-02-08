@@ -2,7 +2,7 @@
   (:require [dynne.sampled-sound :refer :all :as dynne]
             [beat-detector.simplebd :refer :all :as simplebd]))
 
-(def ^:dynamic *sound* (dynne/read-sound "squreone.wav"))
+(def ^:dynamic *sound* (dynne/read-sound "sample.wav"))
 (def ^:dynamic *raw-data* (dynne/chunks *sound* 44100))
 (def ^:dynamic *sound-history-num* 44032)
 (def ^:dynamic *instance-num* 1024)
@@ -14,9 +14,17 @@
 ; that it can be immediately processed by beat detection; i.e. current
 ; energy history buffer, raw datas that appends those stored in energy
 ; buffer, position of current instance, num of samples in one instance,
-; and num of samples in one sound history buffer.
+; num of samples in one sound history buffer, and num of frequency
+; subbands.
 
-(defrecord Packet [buffer raw pos n-inst n-hist])
+(defrecord Packet [buffer raw pos n-inst n-hist n-freq])
+
+(def raw *raw-data*)
+
+(defn testpacket
+  "Returns uninitialized Packet object for testing."
+  []
+  (->Packet nil *raw-data* nil 1024 44032 32))
 
 (defn times->clicks
   "Converts a vector of beat timestamps to dynne sound objects.
@@ -33,12 +41,12 @@
 (defn simplebd
   "Executes simple beat detection algorithm on the given sound source."
   []
-  (let [packet (->Packet nil *raw-data* nil *instance-num* *sound-history-num*)]
+  (let [packet (->Packet nil *raw-data* nil *instance-num* *sound-history-num* nil)]
     (simplebd/start packet)))
 
 (defn clicks
-  "Returns dynne sound objects that contains clicks that sync with detected
-  beats."
+  "Returns dynne sound objects that contains clicks that sync with
+  detected beats."
   []
   (reduce dynne/mix (times->clicks (instances->times (simplebd)))))
 

@@ -2,22 +2,34 @@
   (:use [beat-detector.util])
   (:import [beat_detector FFT]))
 
+(def FFTc (FFT. 1024))
 (defn fft
-  "Computes FFT on the coll and returns same-length fft magnitudes
+  "Computes FFT on the re/im coll and returns same-length fft magnitudes
   vector."
-  [coll]
-  (let [fft (FFT. (count coll))
-        re (double-array coll)
-        im (double-array (count coll))]
+  [re im]
+  (let [re-r (double-array re)
+        im-r (double-array im)]
     (do
-      (.fft fft re im)
-      (map sumsq re im))))
+      (.fft FFTc re-r im-r)
+      (map sumsq re-r im-r))))
 
+(declare divide)
 (defn peek-fft-buffer
   "Computes FFT on the first n-inst samples of raw and returns
-  1024-length fft magnitudes vector. Doesn't consume raw."
-  [raw n-inst]
-  (fft (take-raw raw n-inst)))
+  n-hist-length fft magnitudes vector. Doesn't consume raw."
+  [raw n-inst n-freq]
+  (let [src (take-raw n-inst raw) ;FIXME too slow
+        re (first src)
+        im (second src)]
+    (comment (divide (fft re im) n-freq))
+    (fft re im)))
+
+(defn divide ; FIXME too slow (0.6ms)
+  "Divides the n-inst-length fft buffer into n-freq-length fft buffer, summing
+  each grouped magnitude values."
+  [buffer n-freq]
+  {:pre [(zero? (rem (count buffer) n-freq))]}
+  (vec (map (partial apply +) (partition (/ (count buffer) n-freq) buffer))))
 
 (declare heads-off)
 (defn next-energy-subbands-buffer
@@ -27,12 +39,11 @@
   energy value from fft at the right end (as per vector). When there is
   no more remaining raw, it appends zeros, which would never be falsely
   detected as beats."
-  [buffer raw n-inst]
-  (if (empty? buffer)
-    nil
-    (let [fft-buffer (peek-fft-buffer raw n-inst)
+  [buffer raw n-inst n-freq]
+  {:pre (not (empty? buffer))}
+  (let [fft-buffer (peek-fft-buffer raw n-inst n-freq)
           pre (heads-off buffer)]
-      (map conj pre fft-buffer))))
+      (map conj pre fft-buffer)))
 
 (defn- heads-off
   "Drops head of each subbands from energy subband buffer."
@@ -43,11 +54,13 @@
   "Generates new energy subbands buffer of length n-hist/n-inst,
   containing n-freq subbands, from raw. raw remains intact."
   [raw n-inst n-hist n-freq]
-  (loop [buf (vec (take n-freq (repeat []))) raw' raw n (/ n-inst n-hist)]
+  (loop [buf (vec (repeat n-freq []))
+         raw_ raw
+         n (/ n-hist n-inst)]
     (if (> n 0)
-      (let [fft-buffer (peek-fft-buffer raw' n-inst)]
-        (recur (map conj buf peek-fft-buffer)
-               (drop-raw n-inst raw')
+      (let [fft-buffer (peek-fft-buffer raw_ n-inst n-freq)]
+        (recur (map conj buf fft-buffer)
+               (drop-raw n-inst raw_)
                (dec n)))
       buf)))
 

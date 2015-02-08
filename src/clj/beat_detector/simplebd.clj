@@ -13,18 +13,6 @@
     (let [energy (sound-energy (take-raw n-inst raw))]
       (conj (vec (rest buffer)) energy))))
 
-(defn gen-energy-buffer
-  "Generates new energy buffer of length n-hist/n-inst from raw. raw
-  remains intact."
-  [raw n-inst n-hist]
-  (loop [buf [] raw' raw n (/ n-hist n-inst)]
-    (if (> n 0)
-      (let [energy (sound-energy (take-raw n-inst raw'))]
-        (recur (conj buf energy)
-               (drop-raw n-inst raw')
-               (dec n)))
-      buf)))
-
 (defn peak-threshold-factor
   "Returns C, the factor threshold for an energy peak to be detected as
   a beat, which is determined by the variance of sound energy."
@@ -47,7 +35,7 @@
   "Factory function that returns an initialized Packet."
   [packet]
   (let [{raw :raw n-inst :n-inst n-hist :n-hist} packet
-        new-buffer (gen-energy-buffer raw n-inst n-hist)
+        new-buffer (peek-energy-buffer raw n-inst n-hist)
         rest-raw (drop-raw n-hist raw)]
     (assoc packet :buffer new-buffer :raw rest-raw :pos (/ n-hist n-inst))))
 

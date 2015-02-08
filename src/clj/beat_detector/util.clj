@@ -42,7 +42,7 @@
     []
     (mapv (fn [x] (vec (take n x))) data)))
 
-(defn drop-data ; FIXME The channels become lists, not vectors
+(defn drop-data
   "Clojure's 'drop' function implemented on sound data.
   Returns [(drop n left-data) (drop n right-data)]."
   [n data]
@@ -91,3 +91,14 @@
         right (second data)]
     (apply + (map sumsq left right))))
 
+(defn peek-energy-buffer
+  "Generates new energy buffer of length n-hist/n-inst from raw. raw
+  remains intact."
+  [raw n-inst n-hist]
+  (loop [buf [] raw' raw n (/ n-hist n-inst)]
+    (if (> n 0)
+      (let [energy (sound-energy (take-raw n-inst raw'))]
+        (recur (conj buf energy)
+               (drop-raw n-inst raw')
+               (dec n)))
+      buf)))

@@ -5,17 +5,6 @@
 
 (def ^:dynamic *raw* '(([1 2 3 4] [0 0 0 0]) ([5 6 7 8] [0 0 0 0])))
 
-(deftest gen-energy-buffer-test
-  (testing "general"
-    (is (= (gen-energy-buffer *raw* 2 8)
-           [5 25 61 113])))
-  (testing "when history is longer than raw"
-    (is (= (gen-energy-buffer *raw* 3 9)
-           [14 77 113])))
-  (testing "when instance is longer than raw"
-    (is (= (gen-energy-buffer *raw* 9 9)
-           [204]))))
-
 (deftest next-energy-buffer-test
   (testing "general"
     (is (= (next-energy-buffer [0 1 2 3] *raw* 2)
@@ -33,37 +22,28 @@
 
 (deftest initialize-test
   (testing "general"
-    (let [packet (core/->Packet nil *raw* 0 2 6)
+    (let [packet (core/->Packet nil *raw* 0 2 6 nil)
           {buffer :buffer raw :raw pos :pos} (initialize packet)]
-      (is (= buffer [5 25 61]))
+      (is (= buffer [5 25 60]))
       (is (= raw '([[7 8] [0 0]])))
-      (is (= pos 1))))
+      (is (= pos 3))))
   (testing "when raw is completely consumed"
-    (let [packet (core/->Packet nil *raw* 0 2 8)]
+    (let [packet (core/->Packet nil *raw* 0 2 8 nil)]
       (is (= (take 2 (vals (initialize packet)))
              '([5 25 61 113] ()))))))
 
 (deftest reload-test
   (testing "general"
-      (let [packet (initialize (core/->Packet nil *raw* 0 2 4))
+      (let [packet (initialize (core/->Packet nil *raw* 0 2 4 nil))
             {buffer :buffer raw :raw pos :pos} (reload packet)]
         (is (= buffer [25 61]))
         (is (= raw '([[7 8] [0 0]])))
-        (is (= pos 2))))
+        (is (= pos (inc (/ 4 2))))))
   (testing "when raw depletes on update"
-      (let [packet (initialize (core/->Packet nil *raw* 0 2 6))
+      (let [packet (initialize (core/->Packet nil *raw* 0 2 6 nil))
             {buffer :buffer raw :raw pos :pos} (reload packet)]
         (is (= buffer [25 61 113]))
         (is (= raw '()))
-        (is (= pos 2)))))
+        (is (= pos (inc (/ 6 2)))))))
 
 (def ^:dynamic *rawl* '(([1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 11] [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 11]) ([1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 11] [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 11])))
-
-(def ^:dynamic *p* (core/->Packet nil *rawl* nil 1 2))
-
-(deftest start-test
-  (testing "duration"
-    (let [initial (initialize *p*)
-          result (start *p*)]
-      (is (= initial nil))
-      (is (= result nil)))))
