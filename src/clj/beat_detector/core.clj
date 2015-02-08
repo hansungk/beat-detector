@@ -3,7 +3,7 @@
             [beat-detector.simplebd :only start :as simplebd]
             [beat-detector.freqbd :only start :as freqbd]))
 
-(def ^:dynamic *sound* (dynne/read-sound "lucky.wav"))
+(def ^:dynamic *sound* (dynne/read-sound "sample.wav"))
 (def ^:dynamic *raw-data* (dynne/chunks *sound* 44100))
 (def ^:dynamic *sound-history-num* 44032)
 (def ^:dynamic *instance-num* 1024)

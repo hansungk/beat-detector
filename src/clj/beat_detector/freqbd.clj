@@ -117,17 +117,17 @@
                                     ; So simply disregard last chunk of raw
     (do (println "passing result...") result) ; FIXME stackoverflow!!!
     (recur (reload packet) ; future packet
-           (update-result result (determine-beat packet)
+           (time (update-result result (determine-beat packet)
                           (do (println "Processing" (:pos packet))
                               (println "Current raw count:" (count (:raw packet)))
                               (println "Current result count:" (count (first result)))
                               (println "result class:" (class result))
-                              (:pos packet))))))
+                              (:pos packet)))))))
 
 (defn- update-result
   "Conjoins result with 'binary' result vector returned from determine-beat."
   [result binary pos]
-  (do (println "in update-result....") (map into result (replace {true [pos] false []} binary))))
+  (do (println "in update-result....") (doall (map into result (replace {true [pos] false []} binary))))) ; If no doall, lazySeq does not evaluate and cause stackoverflow error
 
 (defn start
   "Starts frequency selected beat detection algorithm using given Packet
