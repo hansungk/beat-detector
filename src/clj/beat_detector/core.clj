@@ -32,7 +32,9 @@
   "Converts a vector of beat timestamps to dynne sound objects.
   Clicks are 840Hz sinusoidal waves of 0.01sec duration."
   [times]
-  (map (partial dynne/timeshift *click*) times))
+  (do
+    (println "Timeshifting clicks...")
+    (map (partial dynne/timeshift *click*) times)))
 
 (defn instances->times
   "Converts a vector of beat instance indices to the real time.
@@ -66,7 +68,7 @@
   Algorithm is :simple or :freq."
   [algorithm]
   (let [filename (case algorithm :simple "clicks-simple.wav" :freq "clicks-freq.wav")]
-    (dynne/save (clicks algorithm) filename 44100)))
+    (dynne/save (clicks algorithm) (do (println "Saving...") filename) 44100)))
 
 (defn core
   []
