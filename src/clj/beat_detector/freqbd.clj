@@ -13,7 +13,13 @@
       (.fft FFTc re-r im-r)
       (map sumsq re-r im-r))))
 
-(declare divide)
+(defn divide ; FIXME too slow (0.6ms)
+  "Divides the n-inst-length fft buffer into n-freq-length fft buffer, summing
+  each grouped magnitude values."
+  [buffer n-freq]
+  {:pre [(zero? (rem (count buffer) n-freq))]}
+  (vec (map (partial apply +) (partition (/ (count buffer) n-freq) buffer))))
+
 (defn generate-fft-buffer
   "Computes FFT on the first n-inst samples of raw and returns
   n-hist-length fft magnitudes vector. Doesn't consume raw."
@@ -23,14 +29,7 @@
         im (second src)]
     (divide (fft re im) n-freq)))
 
-(defn divide ; FIXME too slow (0.6ms)
-  "Divides the n-inst-length fft buffer into n-freq-length fft buffer, summing
-  each grouped magnitude values."
-  [buffer n-freq]
-  {:pre [(zero? (rem (count buffer) n-freq))]}
-  (vec (map (partial apply +) (partition (/ (count buffer) n-freq) buffer))))
-
-(defn gen-energy-subbands-buffer
+(defn generate-energy-subbands-buffer
   "Generates new energy subbands buffer of length n-hist/n-inst,
   containing n-freq subbands, from raw. raw remains intact."
   [raw n-inst n-hist n-freq]
@@ -69,7 +68,7 @@
   (if (empty? (:raw packet)) ; If raw is empty, return nil
     nil
     (let [{raw :raw n-inst :n-inst n-hist :n-hist n-freq :n-freq} packet
-          new-buffer (gen-energy-subbands-buffer raw n-inst n-hist n-freq)
+          new-buffer (generate-energy-subbands-buffer raw n-inst n-hist n-freq)
           rest-raw (drop-raw n-hist raw)]
       (assoc packet :buffer new-buffer :raw rest-raw :pos (/ n-hist n-inst)))))
 

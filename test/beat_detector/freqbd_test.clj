@@ -17,9 +17,9 @@
     (is (= (divide [1 2 3 4 5 6 7 8] 2)
            [10 26]))))
 
-(def initial-esb (gen-energy-subbands-buffer *raw* 1024 44032 32))
+(def initial-esb (generate-energy-subbands-buffer *raw* 1024 44032 32))
 
-(deftest gen-energy-subbands-buffer-test
+(deftest generate-energy-subbands-buffer-test
   (testing "check subband height"
     (is (= (count initial-esb)
            32)))
