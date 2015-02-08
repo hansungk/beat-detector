@@ -34,7 +34,7 @@
   )
 
 (defn determine-beat
-  "Given energy-buffer, determines wither the target instance is a beat,
+  "Given energy-buffer, determines wether the target instance is a beat,
   which is held by examining the factor between the energy of local peak
   and that of local average."
   [packet]
@@ -63,9 +63,8 @@
     (assoc packet :buffer next-buffer :raw rest-raw :pos (inc pos))))
 
 (defn process
-  "Processes given initialized packet and returns detection result.
-  result is a vector that consists of indices of beat-detected
-  instances."
+  "Processes given initialized packet and returns detection result.  result is
+  a vector that consists of detected beat instance indices."
   [packet result]
   (if (empty? (:raw packet)) ; If raw is depleted, stop processing
     result
