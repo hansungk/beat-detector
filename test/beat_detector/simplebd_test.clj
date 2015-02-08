@@ -24,13 +24,16 @@
   (testing "general"
     (let [packet (core/->Packet nil *raw* 0 2 6 nil)
           {buffer :buffer raw :raw pos :pos} (initialize packet)]
-      (is (= buffer [5 25 60]))
+      (is (= buffer [5 25 61]))
       (is (= raw '([[7 8] [0 0]])))
       (is (= pos 3))))
   (testing "when raw is completely consumed"
     (let [packet (core/->Packet nil *raw* 0 2 8 nil)]
       (is (= (take 2 (vals (initialize packet)))
-             '([5 25 61 113] ()))))))
+             '([5 25 61 113] ())))))
+  (testing "when raw is empty"
+    (let [packet (core/->Packet nil [] 0 2 8 nil)]
+      (is (nil? (initialize packet))))))
 
 (deftest reload-test
   (testing "general"

@@ -21,8 +21,7 @@
   (let [src (take-raw n-inst raw) ;FIXME too slow
         re (first src)
         im (second src)]
-    (comment (divide (fft re im) n-freq))
-    (fft re im)))
+    (divide (fft re im) n-freq)))
 
 (defn divide ; FIXME too slow (0.6ms)
   "Divides the n-inst-length fft buffer into n-freq-length fft buffer, summing
@@ -40,7 +39,7 @@
   no more remaining raw, it appends zeros, which would never be falsely
   detected as beats."
   [buffer raw n-inst n-freq]
-  {:pre (not (empty? buffer))}
+  ;{:pre (not (empty? buffer))}
   (let [fft-buffer (peek-fft-buffer raw n-inst n-freq)
           pre (heads-off buffer)]
       (map conj pre fft-buffer)))
@@ -67,10 +66,12 @@
 (defn initialize
   "Factory function that returns an initialized Packet."
   [packet]
-  (let [{raw :raw n-inst :n-inst n-hist :n-hist n-freq :n-freq} packet
-        new-buffer (gen-energy-subbands-buffer raw n-inst n-hist n-freq)
-        rest-raw (drop-raw n-hist raw)]
-    (assoc packet :buffer new-buffer :raw rest-raw :pos (/ n-hist n-inst))))
+  (if (empty? (:raw packet)) ; If raw is empty, return nil
+    nil
+    (let [{raw :raw n-inst :n-inst n-hist :n-hist n-freq :n-freq} packet
+          new-buffer (gen-energy-subbands-buffer raw n-inst n-hist n-freq)
+          rest-raw (drop-raw n-hist raw)]
+      (assoc packet :buffer new-buffer :raw rest-raw :pos (/ n-hist n-inst)))))
 
 (defn start
   "Starts frequency selected beat detection algorithm using given Packet

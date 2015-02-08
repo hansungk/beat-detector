@@ -34,10 +34,12 @@
 (defn initialize
   "Factory function that returns an initialized Packet."
   [packet]
-  (let [{raw :raw n-inst :n-inst n-hist :n-hist} packet
-        new-buffer (peek-energy-buffer raw n-inst n-hist)
-        rest-raw (drop-raw n-hist raw)]
-    (assoc packet :buffer new-buffer :raw rest-raw :pos (/ n-hist n-inst))))
+  (if (empty? (:raw packet))
+    nil
+    (let [{raw :raw n-inst :n-inst n-hist :n-hist} packet
+          new-buffer (peek-energy-buffer raw n-inst n-hist)
+          rest-raw (drop-raw n-hist raw)]
+    (assoc packet :buffer new-buffer :raw rest-raw :pos (/ n-hist n-inst)))))
 
 (defn reload
   "Reloads buffer of packet with new energy value of 1024 samples from

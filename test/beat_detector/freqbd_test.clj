@@ -1,7 +1,8 @@
 (ns beat-detector.freqbd-test
   (:use [beat-detector.freqbd])
   (:require [clojure.test :refer :all]
-            [beat-detector.core :as core]))
+            [beat-detector.core :as core]
+            [beat-detector.util :as util]))
 
 (def ^:dynamic *raw* core/*raw-data*)
 
@@ -16,37 +17,36 @@
     (is (= (divide [1 2 3 4 5 6 7 8] 2)
            [10 26]))))
 
+(def initial-esb (gen-energy-subbands-buffer *raw* 1024 44032 32))
+
 (deftest gen-energy-subbands-buffer-test
   (testing "check subband height"
-    (is (= (count (time (gen-energy-subbands-buffer *raw* 1024 44032 32)))
-           31)))
+    (is (= (count initial-esb)
+           32)))
   (testing "check subband width"
-    (is (= (count (first (gen-energy-subbands-buffer *raw* 1024 44032 32)))
+    (is (= (count (first initial-esb))
            43))))
 
-(comment (deftest next-energy-subbands-buffer-test
-  (testing "general"
-    (is (= (next-energy-subbands-buffer [0 1 2 3] *raw* 2)
-           [1 2 3 5])))
-  (testing "when there are insufficient datas (< instance-num) in raw"
-    (is (= (next-energy-subbands-buffer [0 1 2 3] *raw* 9)
-           [1 2 3 204])))
-  (testing "when there are no more remaining raw"
-    (is (= (next-energy-subbands-buffer [0 1 2 3] '() 2)
-           [1 2 3 0])))
-  (testing "when given buffer is empty (which should not be)"
-    (is (= (next-energy-subbands-buffer [] *raw* 2)
-           nil)))))
+(def second-esb (next-energy-subbands-buffer initial-esb (util/drop-raw 1024 *raw*) 1024 32))
 
+(deftest next-energy-subbands-buffer-test
+  (testing "check subband height"
+    (is (= (count second-esb)
+           32)))
+  (testing "check subband width"
+    (is (= (count (first second-esb))
+           43)))
+  (testing "check index shift by matching 1st and 2nd elem"
+    (is (= (second (first initial-esb))
+           (first (first second-esb))))))
 
-(comment (deftest initialize-test
+(deftest initialize-test
   (testing "general"
-    (let [packet (core/->Packet nil *raw* 0 2 6 nil)
+    (let [packet (core/->Packet nil *raw* nil 1024 44032 32)
           {buffer :buffer raw :raw pos :pos} (initialize packet)]
-      (is (= buffer [5 25 61]))
-      (is (= raw '([[7 8] [0 0]])))
-      (is (= pos 3))))
-  (testing "when raw is completely consumed"
-    (let [packet (core/->Packet nil *raw* 0 2 8 nil)]
-      (is (= (take 2 (vals (initialize packet)))
-             '([5 25 61 113] ())))))))
+      (is (= (count buffer) 32))
+      (is (= (count (first buffer)) 43))
+      (is (= pos 43))))
+  (testing "when raw is empty"
+    (let [packet (core/->Packet nil [] nil 1024 44032 32)]
+      (is (nil? (initialize packet))))))
