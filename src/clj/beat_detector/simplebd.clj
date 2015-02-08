@@ -1,6 +1,18 @@
 (ns beat-detector.simplebd
   (:use [beat-detector.util]))
 
+(defn generate-energy-buffer
+  "Generates new energy buffer of length n-hist/n-inst from raw. raw
+  remains intact."
+  [raw n-inst n-hist]
+  (loop [buf [] raw' raw n (/ n-hist n-inst)]
+    (if (> n 0)
+      (let [energy (sound-energy (take-raw n-inst raw'))]
+        (recur (conj buf energy)
+               (drop-raw n-inst raw')
+               (dec n)))
+      buf)))
+
 (defn next-energy-buffer
   "Refreshes energy buffer and returns it. buffer should not be empty.
   It will shift data 1 index to the left and conj new energy value from
@@ -37,7 +49,7 @@
   (if (empty? (:raw packet))
     nil
     (let [{raw :raw n-inst :n-inst n-hist :n-hist} packet
-          new-buffer (peek-energy-buffer raw n-inst n-hist)
+          new-buffer (generate-energy-buffer raw n-inst n-hist)
           rest-raw (drop-raw n-hist raw)]
     (assoc packet :buffer new-buffer :raw rest-raw :pos (/ n-hist n-inst)))))
 

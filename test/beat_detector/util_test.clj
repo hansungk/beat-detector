@@ -57,16 +57,3 @@
 (deftest sound-energy-test
   (is (= (sound-energy [[3 5] [4 12]]) (+ 25 169)))
   (is (= (sound-energy []) 0)))
-
-(def ^:dynamic *raw* '(([1 2 3 4] [0 0 0 0]) ([5 6 7 8] [0 0 0 0])))
-
-(deftest peek-energy-buffer-test
-  (testing "general"
-    (is (= (peek-energy-buffer *raw* 2 8)
-           [5 25 61 113])))
-  (testing "when history is longer than raw"
-    (is (= (peek-energy-buffer *raw* 3 9)
-           [14 77 113])))
-  (testing "when instance is longer than raw"
-    (is (= (peek-energy-buffer *raw* 9 9)
-           [204]))))

@@ -6,9 +6,9 @@
 
 (def ^:dynamic *raw* core/*raw-data*)
 
-(deftest peek-fft-buffer-test
+(deftest generate-fft-buffer-test
   (testing "just check size"
-    (is (= (count (peek-fft-buffer *raw* 1024 32)) 32))))
+    (is (= (count (generate-fft-buffer *raw* 1024 32)) 32))))
 
 (deftest divide-test
   (testing "general"

@@ -90,15 +90,3 @@
   (let [left (first data)
         right (second data)]
     (apply + (map sumsq left right))))
-
-(defn peek-energy-buffer
-  "Generates new energy buffer of length n-hist/n-inst from raw. raw
-  remains intact."
-  [raw n-inst n-hist]
-  (loop [buf [] raw' raw n (/ n-hist n-inst)]
-    (if (> n 0)
-      (let [energy (sound-energy (take-raw n-inst raw'))]
-        (recur (conj buf energy)
-               (drop-raw n-inst raw')
-               (dec n)))
-      buf)))

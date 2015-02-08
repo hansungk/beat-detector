@@ -14,7 +14,7 @@
       (map sumsq re-r im-r))))
 
 (declare divide)
-(defn peek-fft-buffer
+(defn generate-fft-buffer
   "Computes FFT on the first n-inst samples of raw and returns
   n-hist-length fft magnitudes vector. Doesn't consume raw."
   [raw n-inst n-freq]
@@ -30,6 +30,20 @@
   {:pre [(zero? (rem (count buffer) n-freq))]}
   (vec (map (partial apply +) (partition (/ (count buffer) n-freq) buffer))))
 
+(defn gen-energy-subbands-buffer
+  "Generates new energy subbands buffer of length n-hist/n-inst,
+  containing n-freq subbands, from raw. raw remains intact."
+  [raw n-inst n-hist n-freq]
+  (loop [buf (vec (repeat n-freq []))
+         raw_ raw
+         n (/ n-hist n-inst)]
+    (if (> n 0)
+      (let [fft-buffer (generate-fft-buffer raw_ n-inst n-freq)]
+        (recur (map conj buf fft-buffer)
+               (drop-raw n-inst raw_)
+               (dec n)))
+      buf)))
+
 (declare heads-off)
 (defn next-energy-subbands-buffer
   "Refreshes energy subbands buffer and returns it. buffer should not be
@@ -40,7 +54,7 @@
   detected as beats."
   [buffer raw n-inst n-freq]
   ;{:pre (not (empty? buffer))}
-  (let [fft-buffer (peek-fft-buffer raw n-inst n-freq)
+  (let [fft-buffer (generate-fft-buffer raw n-inst n-freq)
           pre (heads-off buffer)]
       (map conj pre fft-buffer)))
 
@@ -48,20 +62,6 @@
   "Drops head of each subbands from energy subband buffer."
   [buffer]
   (vec (map (fn [x] (vec (drop 1 x))) buffer)))
-
-(defn gen-energy-subbands-buffer
-  "Generates new energy subbands buffer of length n-hist/n-inst,
-  containing n-freq subbands, from raw. raw remains intact."
-  [raw n-inst n-hist n-freq]
-  (loop [buf (vec (repeat n-freq []))
-         raw_ raw
-         n (/ n-hist n-inst)]
-    (if (> n 0)
-      (let [fft-buffer (peek-fft-buffer raw_ n-inst n-freq)]
-        (recur (map conj buf fft-buffer)
-               (drop-raw n-inst raw_)
-               (dec n)))
-      buf)))
 
 (defn initialize
   "Factory function that returns an initialized Packet."

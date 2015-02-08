@@ -5,6 +5,17 @@
 
 (def ^:dynamic *raw* '(([1 2 3 4] [0 0 0 0]) ([5 6 7 8] [0 0 0 0])))
 
+(deftest generate-energy-buffer-test
+  (testing "general"
+    (is (= (generate-energy-buffer *raw* 2 8)
+           [5 25 61 113])))
+  (testing "when history is longer than raw"
+    (is (= (generate-energy-buffer *raw* 3 9)
+           [14 77 113])))
+  (testing "when instance is longer than raw"
+    (is (= (generate-energy-buffer *raw* 9 9)
+           [204]))))
+
 (deftest next-energy-buffer-test
   (testing "general"
     (is (= (next-energy-buffer [0 1 2 3] *raw* 2)
