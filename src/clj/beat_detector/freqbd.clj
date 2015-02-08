@@ -14,12 +14,25 @@
       (.fft FFTc re-r im-r)
       (map sumsq re-r im-r))))
 
+(defn log->linear
+  "Converts logarithmic 1~n-freq into linear 1~n-inst."
+  [i n-inst n-freq]
+  (Math/ceil (* (/ n-inst 44100.0) 20.0 (Math/pow 1000 (/ i n-freq)))))
+
 (defn divide ; FIXME too slow (0.6ms)
   "Divides the n-inst-length fft buffer into n-freq-length fft buffer, summing
   each grouped magnitude values."
-  [buffer n-freq]
-  {:pre [(zero? (rem (count buffer) n-freq))]}
-  (vec (map (partial apply +) (partition (/ (count buffer) n-freq) buffer))))
+  [buffer n-inst n-freq]
+  (comment (vec (map (fn [x] (* (/ n-freq 1024.0) (apply + x))) (partition (/ (count buffer) n-freq) buffer))))
+  (loop [dest [] src buffer n 1]
+    (if (<= n n-freq)
+      (let [index-i (log->linear (dec n) n-inst n-freq)
+            index-f (log->linear n n-inst n-freq)
+            n-take (- index-f index-i)]
+        (if (< n-take 1) ; Don't consume src
+          (recur (conj dest (first src)) src (inc n))
+          (recur (conj dest (apply + (take n-take src))) (drop n-take src) (inc n))))
+      dest)))
 
 (defn generate-fft-buffer
   "Computes FFT on the first n-inst samples of raw and returns
@@ -28,7 +41,7 @@
   (let [src (take-raw n-inst raw) ;FIXME too slow
         re (first src)
         im (second src)]
-    (divide (fft re im) n-freq)))
+    (divide (fft re im) n-inst n-freq)))
 
 (defn generate-energy-subbands-buffer
   "Generates new energy subbands buffer of length n-hist/n-inst,
@@ -71,7 +84,7 @@
   (let [buffer (:buffer packet)
         tails (map last buffer)
         avgs (map average buffer)
-        C 2]
+        C 3] ; 2 ~ 3
     (map (fn [x y] (> x (* C y))) tails avgs)))
 
 (defn initialize
@@ -102,14 +115,19 @@
   [packet result]
   (if (nil? (second (:raw packet))) ; If length of raw gets smaller than 1024, FFT becomes impossible
                                     ; So simply disregard last chunk of raw
-    result
+    (do (println "passing result...") result) ; FIXME stackoverflow!!!
     (recur (reload packet) ; future packet
-           (update-result result (determine-beat packet) (:pos packet)))))
+           (update-result result (determine-beat packet)
+                          (do (println "Processing" (:pos packet))
+                              (println "Current raw count:" (count (:raw packet)))
+                              (println "Current result count:" (count (first result)))
+                              (println "result class:" (class result))
+                              (:pos packet))))))
 
 (defn- update-result
   "Conjoins result with 'binary' result vector returned from determine-beat."
   [result binary pos]
-  (map into result (replace {true [pos] false []} binary)))
+  (do (println "in update-result....") (map into result (replace {true [pos] false []} binary))))
 
 (defn start
   "Starts frequency selected beat detection algorithm using given Packet
