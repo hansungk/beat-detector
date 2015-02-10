@@ -108,7 +108,7 @@
         E (average buffer)]
     (> (peek buffer) (* C E))))
 
-(defn trim-adjacent
+(comment (defn trim-adjacent
   "Removes adjacent numbers from given numbers vector. Allows one skip in
   adjacency checking. Leaves only the head of each adjacencies."
   [coll]
@@ -117,4 +117,17 @@
               [y]
               (if (> (- y (last xs)) 5)
                 (conj xs y)
-                xs))) [] coll))
+                xs))) [] coll)))
+
+(defn trim-adjacent
+  "Removes adjacent numbers from given numbers vector. Allows one skip in
+  adjacency checking. Leaves only the head of each adjacencies."
+  [coll]
+  (first
+    (reduce (fn [[xs x1] x2] ; xs: trimmed coll so far
+                             ; x1: last read value
+                             ; x2: newly read value
+              (if (<= (- x2 x1) 2)
+                [xs x2] ; consecutive, no add
+                [(conj xs x2) x2])) ; new head, add
+            [[] -3] coll)))

@@ -115,8 +115,8 @@
   1-D vectors in the result match with n-freq frequency subbands in the same
   order."
   [packet result]
-  (if (< (count (:raw packet)) 2) ; If length of raw gets smaller than 1024, FFT becomes impossible
-                                    ; So simply disregard last chunk of raw
+  (if (nil? (second (:raw packet))) ; If length gets smaller than 1024, FFT becomes
+                                  ; impossible - so simply disregard last chunk
     result
     (recur (reload packet) ; future packet
            (update-result result (determine-beat packet) ; FIXME time later
@@ -133,4 +133,4 @@
   data."
   [packet]
   (let [initial-result (vec (repeat (:n-freq packet) []))]
-    (process (initialize packet) initial-result)))
+    (map trim-adjacent (process (initialize packet) initial-result))))
