@@ -88,5 +88,33 @@
   channel."
   [data]
   (let [left (first data)
-        right (second data)]
-    (apply + (map sumsq left right))))
+        right (second data)
+        N (count left)]
+    (* 100 (Math/sqrt (/ (apply + (map sumsq left right)) (* 2 N))))))
+
+(defn peak-threshold-factor
+  "Returns C, the factor threshold for an energy peak to be detected as
+  a beat, which is determined by the variance of sound energy."
+  [variance]
+  (comment 1.2)
+  (do (println (+ 1.5142857 (* -0.0025714 variance)))
+      (+ 1.5142857 (* -0.0025714 variance))))
+
+(defn determine-subbands-beat
+  "Determines beat from given 1-D buffer using linear peak energy factor
+  variation."
+  [buffer]
+  (let [C (peak-threshold-factor (variance-avg buffer))
+        E (average buffer)]
+    (> (peek buffer) (* C E))))
+
+(defn trim-adjacent
+  "Removes adjacent numbers from given numbers vector. Allows one skip in
+  adjacency checking. Leaves only the head of each adjacencies."
+  [coll]
+  (reduce (fn [xs y]
+            (if (empty? xs)
+              [y]
+              (if (> (- y (last xs)) 5)
+                (conj xs y)
+                xs))) [] coll))

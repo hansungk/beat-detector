@@ -25,23 +25,12 @@
     (let [energy (sound-energy (take-raw n-inst raw))]
       (conj (vec (rest buffer)) energy))))
 
-(defn peak-threshold-factor
-  "Returns C, the factor threshold for an energy peak to be detected as
-  a beat, which is determined by the variance of sound energy."
-  [variance]
-  (comment (+ 1.5142857 (* -0.0025714 variance))) ; FIXME this doesn't work well
-  1.2
-  )
-
 (defn determine-beat
   "Given energy-buffer, determines wether the target instance is a beat,
   which is held by examining the factor between the energy of local peak
   and that of local average."
   [packet]
-  (let [buffer (:buffer packet)
-        C (peak-threshold-factor (variance-avg buffer))
-        E (average buffer)]
-    (> (peek buffer) (* C E))))
+  (determine-subbands-beat (:buffer packet)))
 
 (defn initialize
   "Factory function that returns an initialized Packet."
@@ -71,17 +60,6 @@
     (if (determine-beat packet)
       (recur (reload packet) (conj result (:pos packet)))
       (recur (reload packet) result))))
-
-(defn trim-adjacent
-  "Removes adjacent numbers from given numbers vector.
-  Only leaves the head of each adjacencies."
-  [coll]
-  (reduce (fn [xs y]
-            (if (empty? xs)
-              [y]
-              (if (> (- y (last xs)) 5)
-                (conj xs y)
-                xs))) [] coll))
 
 (defn start
   "Starts simple beat detection algorithm using given Packet data."

@@ -23,15 +23,15 @@
   "Divides the n-inst-length fft buffer into n-freq-length fft buffer, summing
   each grouped magnitude values."
   [buffer n-inst n-freq]
-  (comment (vec (map (fn [x] (* (/ n-freq 1024.0) (apply + x))) (partition (/ (count buffer) n-freq) buffer))))
+  (comment (vec (map (fn [x] (* (/ n-freq n-inst) (apply + x))) (partition (/ (count buffer) n-freq) buffer))))
   (loop [dest [] src buffer n 1]
     (if (<= n n-freq)
       (let [index-i (log->linear (dec n) n-inst n-freq)
             index-f (log->linear n n-inst n-freq)
             n-take (- index-f index-i)]
         (if (< n-take 1) ; Don't consume src
-          (recur (conj dest (first src)) src (inc n))
-          (recur (conj dest (apply + (take n-take src))) (drop n-take src) (inc n))))
+          (recur (conj dest (* (/ 1 n-inst) (first src))) src (inc n))
+          (recur (conj dest (* (/ n-take n-inst) (apply + (take n-take src)))) (drop n-take src) (inc n))))
       dest)))
 
 (defn generate-fft-buffer
@@ -41,7 +41,7 @@
   (let [src (take-raw n-inst raw) ;FIXME too slow
         re (first src)
         im (second src)]
-    (divide (fft re im) n-inst n-freq)))
+    (if (= (count re) n-inst) (divide (fft re im) n-inst n-freq)))) ; FIXME only accept 1024
 
 (defn generate-energy-subbands-buffer
   "Generates new energy subbands buffer of length n-hist/n-inst,
@@ -84,7 +84,9 @@
   (let [buffer (:buffer packet)
         tails (map last buffer)
         avgs (map average buffer)
-        C 3] ; 2 ~ 3
+        C 3
+        _ (println (variance-avg (nth buffer 11)))]
+    (comment (map determine-subbands-beat buffer))
     (map (fn [x y] (> x (* C y))) tails avgs)))
 
 (defn initialize
@@ -113,15 +115,12 @@
   1-D vectors in the result match with n-freq frequency subbands in the same
   order."
   [packet result]
-  (if (nil? (second (:raw packet))) ; If length of raw gets smaller than 1024, FFT becomes impossible
+  (if (< (count (:raw packet)) 2) ; If length of raw gets smaller than 1024, FFT becomes impossible
                                     ; So simply disregard last chunk of raw
-    (do (println "passing result...") result) ; FIXME stackoverflow!!!
+    result
     (recur (reload packet) ; future packet
            (update-result result (determine-beat packet) ; FIXME time later
-                          (do (println "Processing" (:pos packet))
-                              (println "Current raw count:" (count (:raw packet)))
-                              (println "Current result count:" (count (first result)))
-                              (println "result class:" (class result))
+                          (do
                               (:pos packet))))))
 
 (defn- update-result
