@@ -131,3 +131,47 @@
                 [xs x2] ; consecutive, no add
                 [(conj xs x2) x2])) ; new head, add
             [[] -3] coll)))
+
+(defn shift
+  "Increases given numbers by d."
+  [d nums]
+  (vec (map (partial + d) nums)))
+
+(defn find-near
+  "Finds an element of nums that is the nearest to the given x."
+  [^long x nums]
+  (let [diffs (map (fn [^long y] (Math/abs (long (- y x)))) nums)
+        idx (.indexOf diffs (apply min diffs))]
+    (nums idx)))
+
+(def ^:constant C 2)
+
+(defn smooth
+  "Smooth out numbers vector.
+  If a magnitude of each number is smaller than 'C', zero it out."
+  [nums]
+  (map (fn [^long x] (if (<= (Math/abs x) C) 0 x)) nums))
+
+(defn autocorrelate
+  "Subtracts each value of nums to the nearest value in nums shifted by d."
+  [nums d]
+  (let [snums (shift d nums)]
+    (smooth (map (fn [x] (- x (find-near x nums))) snums))))
+
+(defn corr-zerocounts
+  "Returns a vector of counts of zeros from autocorrelations of times.
+  Each element at index matches counts of zeros occurred in autocorrelation by
+  index."
+  [times]
+  (loop [d (inc C) hits (vec (repeat d 0))]
+    (if (<= d 300)
+      (recur (inc d) (conj hits (count (filter zero? (autocorrelate times d)))))
+      hits)))
+
+(defn estimated-interval
+  "Returns estimated interval of instances by which given beats repeat by
+  a specific pattern."
+  [times]
+  (let [zerocounts (corr-zerocounts times)
+        maxcount (apply max zerocounts)]
+    (+ (.indexOf zerocounts maxcount) (quot C 2))))

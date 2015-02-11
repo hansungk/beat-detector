@@ -1,9 +1,10 @@
 (ns beat-detector.core
   (:require [dynne.sampled-sound :refer :all :as dynne]
+            [beat-detector.util :refer :all :as util]
             [beat-detector.simplebd :only start :as simplebd]
             [beat-detector.freqbd :only start :as freqbd]))
 
-(def ^:dynamic *sound* (dynne/read-sound "amazing-chorus.wav"))
+(def ^:dynamic *sound* (dynne/read-sound "sample.wav"))
 (def ^:dynamic *raw-data* (dynne/chunks *sound* 44100))
 (def ^:dynamic *n-hist* 44032)
 (def ^:dynamic *n-inst* 1024)
@@ -54,6 +55,10 @@
         (->Packet nil *raw-data* nil *n-inst* *n-hist* *n-freq*)]
     (nth (freqbd/start packet) 11))) ; 1~7: 0~43Hz 8~13: 43~86Hz
 
+(defn corr
+  []
+  (estimated-interval (freqbd)))
+
 (defn clicks
   "Returns dynne sound objects that contains clicks that sync with
   detected beats.
@@ -67,7 +72,7 @@
   "Save clicks object into wav file named clicks.wav.
   Algorithm is :simple or :freq."
   [algorithm]
-  (let [filename (case algorithm :simple "clicks-simple.wav" :freq "clicks-freq.wav")]
+  (let [filename (case algorithm :simple "simple.wav" :freq "freq.wav")]
     (dynne/save (clicks algorithm) (do (println "Saving...") filename) 44100)))
 
 (defn core

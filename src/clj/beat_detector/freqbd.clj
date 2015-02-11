@@ -23,7 +23,6 @@
   "Divides the n-inst-length fft buffer into n-freq-length fft buffer, summing
   each grouped magnitude values."
   [buffer n-inst n-freq]
-  (comment (vec (map (fn [x] (* (/ n-freq n-inst) (apply + x))) (partition (/ (count buffer) n-freq) buffer))))
   (loop [dest [] src buffer n 1]
     (if (<= n n-freq)
       (let [index-i (log->linear (dec n) n-inst n-freq)
@@ -31,7 +30,9 @@
             n-take (- index-f index-i)]
         (if (< n-take 1) ; Don't consume src
           (recur (conj dest (* (/ 1 n-inst) (first src))) src (inc n))
-          (recur (conj dest (* (/ n-take n-inst) (apply + (take n-take src)))) (drop n-take src) (inc n))))
+          (recur (conj dest (* (/ n-take n-inst) (apply + (take n-take src))))
+                 (drop n-take src)
+                 (inc n))))
       dest)))
 
 (defn generate-fft-buffer
@@ -126,7 +127,8 @@
 (defn- update-result
   "Conjoins result with 'binary' result vector returned from determine-beat."
   [result binary pos]
-  (doall (map into result (replace {true [pos] false []} binary)))) ; If no doall, lazySeq does not evaluate and cause stackoverflow error
+  (doall (map into result (replace {true [pos] false []} binary))))
+  ; If no doall, LazySeq does not evaluate and cause stackoverflow error
 
 (defn start
   "Starts frequency selected beat detection algorithm using given Packet
