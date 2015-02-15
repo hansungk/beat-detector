@@ -4,13 +4,13 @@
             [beat-detector.simplebd :only start :as simplebd]
             [beat-detector.freqbd :only start :as freqbd]))
 
-(def ^:dynamic *sound* (dynne/read-sound "sample.wav"))
-(def ^:dynamic *raw-data* (dynne/chunks *sound* 44100))
-(def ^:dynamic *n-hist* 44032)
-(def ^:dynamic *n-inst* 1024)
-(def ^:dynamic *n-freq* 64)
-(def ^:dynamic *chunk-size* 10000)
-(def ^:dynamic *click* (dynne/sinusoid 0.01 840))
+(def sound (dynne/read-sound "morethan.wav"))
+(def raw-data (dynne/chunks sound 44100))
+(def n-hist 44032)
+(def n-inst 1024)
+(def n-freq 64)
+(def chunk-size 10000)
+(def click (dynne/sinusoid 0.01 840))
 
 ; A Packet is a bundle data that contains all the necessary informations
 ; that it can be immediately processed by beat detection; i.e. current
@@ -20,12 +20,12 @@
 ; subbands.
 (defrecord Packet [buffer raw pos n-inst n-hist n-freq])
 
-(def raw *raw-data*)
+(def raw raw-data)
 
 (defn testpacket
   "Returns uninitialized Packet object for testing."
   []
-  (->Packet nil *raw-data* nil *n-inst* *n-hist* *n-freq*))
+  (->Packet nil raw-data nil n-inst n-hist n-freq))
 
 (defn times->clicks
   "Converts a vector of beat timestamps to dynne sound objects.
@@ -33,31 +33,44 @@
   [times]
   (do
     (println "Timeshifting clicks...")
-    (map (partial dynne/timeshift *click*) times)))
+    (map (partial dynne/timeshift click) times)))
 
 (defn instances->times
   "Converts a vector of beat instance indices to the real time.
   The time is when the beat starts."
   [instances]
-  (map (fn [x] (* (/ *n-inst* 44100) (dec x))) instances))
+  (map (fn [x] (* (/ n-inst 44100) (dec x))) instances))
 
 (defn simplebd
   "Executes simple beat detection algorithm on the given sound source."
   []
   (let [packet
-        (->Packet nil *raw-data* nil *n-inst* *n-hist* nil)]
+        (->Packet nil raw-data nil n-inst n-hist nil)]
     (simplebd/start packet)))
 
 (defn freqbd
-  "Executes simple beat detection algorithm on the given sound source."
+  "Executes frequency beat detection algorithm on the given sound source."
   []
   (let [packet
-        (->Packet nil *raw-data* nil *n-inst* *n-hist* *n-freq*)]
+        (->Packet nil raw-data nil n-inst n-hist n-freq)]
     (nth (freqbd/start packet) 11))) ; 1~7: 0~43Hz 8~13: 43~86Hz
+
+(defn majorbd
+  "Executes major beat detection algorithm on the given sound source."
+  []
+  (filter-primary-beats (freqbd)))
 
 (defn corr
   []
+  (corr-zerocounts (freqbd)))
+
+(defn interval
+  []
   (estimated-interval (freqbd)))
+
+(defn best-corr
+  []
+  (autocorrelate (freqbd) (interval)))
 
 (defn clicks
   "Returns dynne sound objects that contains clicks that sync with
@@ -66,15 +79,16 @@
   [algorithm]
   (case algorithm
     :simple (reduce dynne/mix (times->clicks (instances->times (simplebd))))
-    :freq (reduce dynne/mix (times->clicks (instances->times (freqbd))))))
+    :freq (reduce dynne/mix (times->clicks (instances->times (freqbd))))
+    :major (reduce dynne/mix (times->clicks (instances->times (majorbd))))))
 
 (defn save-clicks
   "Save clicks object into wav file named clicks.wav.
-  Algorithm is :simple or :freq."
-  [algorithm]
-  (let [filename (case algorithm :simple "simple.wav" :freq "freq.wav")]
-    (dynne/save (clicks algorithm) (do (println "Saving...") filename) 44100)))
+  flag is :simple or :freq or :major."
+  [flag]
+  (let [filename (case flag :simple "simple.wav" :freq "freq.wav" :major "major.wav")]
+    (dynne/save (clicks flag) (do (println "Saving...") filename) 44100)))
 
 (defn core
   []
-  (dynne/mix *sound* (dynne/->stereo (clicks))))
+  (dynne/mix sound (dynne/->stereo (clicks))))

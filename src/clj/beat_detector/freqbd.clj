@@ -75,7 +75,7 @@
 (defn- heads-off
   "Drops head of each subbands from energy subband buffer."
   [buffer]
-  (vec (map (fn [x] (vec (drop 1 x))) buffer)))
+  (mapv (fn [x] (vec (drop 1 x))) buffer))
 
 (defn determine-beat
   "Given energy subbands buffer, executes beat determination algorithm to each
@@ -116,7 +116,7 @@
   1-D vectors in the result match with n-freq frequency subbands in the same
   order."
   [packet result]
-  (if (nil? (second (:raw packet))) ; If length gets smaller than 1024, FFT becomes
+  (if (nil? (second (:raw packet))) ; If raw gets smaller than 1024, FFT becomes
                                   ; impossible - so simply disregard last chunk
     result
     (recur (reload packet) ; future packet

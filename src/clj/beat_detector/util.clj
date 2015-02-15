@@ -108,17 +108,6 @@
         E (average buffer)]
     (> (peek buffer) (* C E))))
 
-(comment (defn trim-adjacent
-  "Removes adjacent numbers from given numbers vector. Allows one skip in
-  adjacency checking. Leaves only the head of each adjacencies."
-  [coll]
-  (reduce (fn [xs y]
-            (if (empty? xs)
-              [y]
-              (if (> (- y (last xs)) 5)
-                (conj xs y)
-                xs))) [] coll)))
-
 (defn trim-adjacent
   "Removes adjacent numbers from given numbers vector. Allows one skip in
   adjacency checking. Leaves only the head of each adjacencies."
@@ -147,8 +136,6 @@
 (def ^:constant C 2)
 
 (defn smooth
-  "Smooth out numbers vector.
-  If a magnitude of each number is smaller than 'C', zero it out."
   [nums]
   (map (fn [^long x] (if (<= (Math/abs x) C) 0 x)) nums))
 
@@ -175,3 +162,12 @@
   (let [zerocounts (corr-zerocounts times)
         maxcount (apply max zerocounts)]
     (+ (.indexOf zerocounts maxcount) (quot C 2))))
+
+(defn filter-primary-beats
+  [times]
+  (let [interval (estimated-interval times)
+        best-corr (autocorrelate times interval)
+        index-zip (map vector best-corr (range))]
+    (mapv times (reduce (fn [acc [x y]]
+              (if (zero? x) (conj acc y) acc))
+            [] index-zip))))
