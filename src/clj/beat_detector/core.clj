@@ -1,10 +1,10 @@
 (ns beat-detector.core
-  (:require [dynne.sampled-sound :refer :all :as dynne]
-            [beat-detector.util :refer :all :as util]
+  (:require [dynne.sampled-sound :as dynne]
+            [beat-detector.util :refer :all]
             [beat-detector.simplebd :only start :as simplebd]
             [beat-detector.freqbd :only start :as freqbd]))
 
-(def sound (dynne/read-sound "morethan.wav"))
+(def sound (dynne/read-sound "unkissme-chorus.wav"))
 (def raw-data (dynne/chunks sound 44100))
 (def n-hist 44032)
 (def n-inst 1024)
@@ -58,7 +58,7 @@
 (defn majorbd
   "Executes major beat detection algorithm on the given sound source."
   []
-  (filter-primary-beats (freqbd)))
+  (find-major-beats (freqbd)))
 
 (defn corr
   []
@@ -71,6 +71,13 @@
 (defn best-corr
   []
   (autocorrelate (freqbd) (interval)))
+
+(defn setup
+  []
+  (do
+    (save-clicks :freq)
+    (save-clicks :major)
+    (majorbd)))
 
 (defn clicks
   "Returns dynne sound objects that contains clicks that sync with
