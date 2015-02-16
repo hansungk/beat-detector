@@ -9,8 +9,11 @@
 (def n-hist 44032)
 (def n-inst 1024)
 (def n-freq 64)
-(def chunk-size 10000)
+(def chunk-size (count (ffirst raw-data)))
 (def click (dynne/sinusoid 0.01 840))
+(def duration-smpl
+  (+ (* chunk-size (dec (count raw-data))) (count (first (last raw-data)))))
+(def duration-inst (long (/ duration-smpl n-inst)))
 
 ; A Packet is a bundle data that contains all the necessary informations
 ; that it can be immediately processed by beat detection; i.e. current
@@ -19,8 +22,6 @@
 ; num of samples in one sound history buffer, and num of frequency
 ; subbands.
 (defrecord Packet [buffer raw pos n-inst n-hist n-freq])
-
-(def raw raw-data)
 
 (defn testpacket
   "Returns uninitialized Packet object for testing."
@@ -72,13 +73,6 @@
   []
   (autocorrelate (freqbd) (interval)))
 
-(defn setup
-  []
-  (do
-    (save-clicks :freq)
-    (save-clicks :major)
-    (majorbd)))
-
 (defn clicks
   "Returns dynne sound objects that contains clicks that sync with
   detected beats.
@@ -95,6 +89,13 @@
   [flag]
   (let [filename (case flag :simple "simple.wav" :freq "freq.wav" :major "major.wav")]
     (dynne/save (clicks flag) (do (println "Saving...") filename) 44100)))
+
+(defn setup
+  []
+  (do
+    (save-clicks :freq)
+    (save-clicks :major)
+    (majorbd)))
 
 (defn core
   []

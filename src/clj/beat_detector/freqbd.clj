@@ -85,10 +85,12 @@
   (let [buffer (:buffer packet)
         tails (map last buffer)
         avgs (map average buffer)
-        C 3
-        _ (println (variance-avg (nth buffer 11)))]
-    (comment (map determine-subbands-beat buffer))
-    (map (fn [x y] (> x (* C y))) tails avgs)))
+        variances (map variance-avg buffer)
+        C 3.0
+        V0 150.0]
+    (mapv #(every? true? (vector %1 %2))
+          (map (fn [x y] (> x (* C y))) tails avgs) ; E > C*Eavg filtering
+          (map #(> % V0) variances)))) ; V > V0 Filtering
 
 (defn initialize
   "Factory function that returns an initialized Packet."
@@ -110,6 +112,14 @@
     (assoc packet :buffer next-buffer :raw rest-raw :pos (inc pos))))
 
 (declare update-result)
+(defn print-progress
+  [pos]
+  (println "Progress:" (/
+                          (long (* 1000.0
+                                   (/ (inc pos)
+                                      beat-detector.core/duration-inst))) 10.0)
+           "%"))
+
 (defn process
   "Processes given initialized packet and returns detection result.
   result is a 2-D vector that consists of detected beat instance indices.  Each
@@ -122,7 +132,8 @@
     (recur (reload packet) ; future packet
            (update-result result (determine-beat packet) ; FIXME time later
                           (do
-                              (:pos packet))))))
+                            (print-progress (:pos packet))
+                            (:pos packet))))))
 
 (defn- update-result
   "Conjoins result with 'binary' result vector returned from determine-beat."
