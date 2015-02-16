@@ -4,7 +4,7 @@
             [beat-detector.simplebd :only start :as simplebd]
             [beat-detector.freqbd :only start :as freqbd]))
 
-(def sound (dynne/read-sound "unkissme-chorus.wav"))
+(def sound (dynne/read-sound "subterranean-athird.wav"))
 (def raw-data (dynne/chunks sound 44100))
 (def n-hist 44032)
 (def n-inst 1024)
@@ -59,7 +59,7 @@
 (defn majorbd
   "Executes major beat detection algorithm on the given sound source."
   []
-  (find-major-beats (freqbd)))
+  (determine-bpm (freqbd)))
 
 (defn corr
   []

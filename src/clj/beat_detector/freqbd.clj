@@ -87,7 +87,7 @@
         avgs (map average buffer)
         variances (map variance-avg buffer)
         C 3.0
-        V0 150.0]
+        V0 20.0]
     (mapv #(every? true? (vector %1 %2))
           (map (fn [x y] (> x (* C y))) tails avgs) ; E > C*Eavg filtering
           (map #(> % V0) variances)))) ; V > V0 Filtering
