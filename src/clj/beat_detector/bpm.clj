@@ -31,7 +31,7 @@
           (recur dst (+ cand interval))))
       dst)))
 
-(defn find-major-beats
+(defn find-major-beats ; SLOW
   [times]
   (let [pivots (patterned-beats times)
         interval (estimated-interval times)
@@ -47,7 +47,7 @@
                     (println "Elected candidate:" candidates)
                     (reduced candidates))))) 0 pivots)))
 
-(defn determine-bpm
+(defn determine-bpm ; SLOW
   [times]
   (let [majors (find-major-beats times)
         interval (estimated-interval times)

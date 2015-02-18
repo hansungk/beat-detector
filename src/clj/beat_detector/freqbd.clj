@@ -88,7 +88,9 @@
         avgs (map average buffer)
         variances (map variance-avg buffer)
         C 3.0
-        V0 5.0]
+        V0 1.0] ; FIXME Implement replayGain?
+                ; TODO Segment beats (verse, chorus,...) and process each
+                ; independently
     (mapv #(every? true? (vector %1 %2))
           (map (fn [x y] (> x (* C y))) tails avgs) ; E > C*Eavg filtering
           (map #(> % V0) variances)))) ; V > V0 Filtering
