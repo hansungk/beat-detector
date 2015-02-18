@@ -50,6 +50,11 @@
 (defn majorbd
   "Executes major beat detection algorithm on the given sound source."
   []
+  (bpm/find-major-beats (freqbd)))
+
+(defn bpm
+  "Executes major beat detection algorithm on the given sound source."
+  []
   (bpm/determine-bpm (freqbd)))
 
 (defn corr
@@ -89,7 +94,7 @@
   (do
     (save-clicks :freq)
     (save-clicks :major)
-    (majorbd)))
+    (bpm)))
 
 (defn core
   []

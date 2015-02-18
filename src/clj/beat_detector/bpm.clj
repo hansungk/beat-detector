@@ -27,7 +27,7 @@
     (if (<= cand (+ C (last times)))
       (let [found (find-near cand times)]
         (if (<= (Math/abs (- cand found)) 4) ; FIXME: 4 is hardcoded
-          (recur (conj dst found) (+ cand interval))
+          (recur (conj dst found) (+ found interval))
           (recur dst (+ cand interval))))
       dst)))
 
@@ -39,8 +39,8 @@
         _ (println "Patterned beats:" pivots)
         _ (println "Interval: " interval)]
     (reduce (fn [_ x]
-              (let [candidates (candidate-major-beats times x interval)
-                    _ (println "Trying pivot" x)]
+              (let [_ (println "Trying" x "as pivot")
+                    candidates (candidate-major-beats times x interval)]
                 (if (< (count candidates) (/ (count times) 10))
                   (println "Too short candidates:" candidates)
                   (do
