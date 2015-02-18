@@ -1,10 +1,11 @@
 (ns beat-detector.freqbd-test
   (:use [beat-detector.freqbd])
   (:require [clojure.test :refer :all]
-            [beat-detector.core :as core]
-            [beat-detector.util :as util]))
+            [beat-detector.util :as util]
+            [beat-detector.loader :as loader]
+            [beat-detector.core :only ->Packet :as core]))
 
-(def raw core/raw-data)
+(def raw loader/raw-data)
 
 (deftest generate-fft-buffer-test
   (testing "just check size"

@@ -1,20 +1,10 @@
 (ns beat-detector.core
   (:require [dynne.sampled-sound :as dynne]
             [beat-detector.util :refer :all]
+            [beat-detector.loader :as loader]
             [beat-detector.simplebd :only start :as simplebd]
             [beat-detector.freqbd :only start :as freqbd]
             [beat-detector.bpm :as bpm]))
-
-(def sound (dynne/read-sound "subterranean-athird.wav"))
-(def raw-data (dynne/chunks sound 44100))
-(def n-hist 44032)
-(def n-inst 1024)
-(def n-freq 64)
-(def chunk-size (count (ffirst raw-data)))
-(def click (dynne/sinusoid 0.01 840))
-(def duration-smpl
-  (+ (* chunk-size (dec (count raw-data))) (count (first (last raw-data)))))
-(def duration-inst (long (/ duration-smpl n-inst)))
 
 ; A Packet is a bundle data that contains all the necessary informations
 ; that it can be immediately processed by beat detection; i.e. current
@@ -27,7 +17,7 @@
 (defn testpacket
   "Returns uninitialized Packet object for testing."
   []
-  (->Packet nil raw-data nil n-inst n-hist n-freq))
+  (->Packet nil loader/raw-data nil loader/n-inst loader/n-hist loader/n-freq))
 
 (defn times->clicks
   "Converts a vector of beat timestamps to dynne sound objects.
@@ -35,26 +25,26 @@
   [times]
   (do
     (println "Timeshifting clicks...")
-    (map (partial dynne/timeshift click) times)))
+    (map (partial dynne/timeshift loader/click) times)))
 
 (defn instances->times
   "Converts a vector of beat instance indices to the real time.
   The time is when the beat starts."
   [instances]
-  (map (fn [x] (* (/ n-inst 44100) (dec x))) instances))
+  (map (fn [x] (* (/ loader/n-inst 44100) (dec x))) instances))
 
 (defn simplebd
   "Executes simple beat detection algorithm on the given sound source."
   []
   (let [packet
-        (->Packet nil raw-data nil n-inst n-hist nil)]
+        (->Packet nil loader/raw-data nil loader/n-inst loader/n-hist nil)]
     (simplebd/start packet)))
 
 (defn freqbd
   "Executes frequency beat detection algorithm on the given sound source."
   []
   (let [packet
-        (->Packet nil raw-data nil n-inst n-hist n-freq)]
+        (->Packet nil loader/raw-data nil loader/n-inst loader/n-hist loader/n-freq)]
     (nth (freqbd/start packet) 11))) ; 1~7: 0~43Hz 8~13: 43~86Hz
 
 (defn majorbd
@@ -100,4 +90,4 @@
 
 (defn core
   []
-  (dynne/mix sound (dynne/->stereo (clicks))))
+  (dynne/mix loader/sound (dynne/->stereo (clicks))))
