@@ -75,10 +75,13 @@
     :major (reduce dynne/mix (times->clicks (instances->times (majorbd))))))
 
 (defn save-clicks
-  "Save clicks object into wav file named clicks.wav.
+  "Save clicks object into an aptly named wav file.
   flag is :simple or :freq or :major."
   [flag]
-  (let [filename (case flag :simple "simple.wav" :freq "freq.wav" :major "major.wav")]
+  (let [filename (case flag
+                   :simple "wavs/simple.wav"
+                   :freq "wavs/freq.wav"
+                   :major "wavs/major.wav")]
     (dynne/save (clicks flag) (do (println "Saving...") filename) 44100)))
 
 (defn setup

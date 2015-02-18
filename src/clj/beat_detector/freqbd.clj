@@ -1,5 +1,6 @@
 (ns beat-detector.freqbd
-  (:use [beat-detector.util])
+  (:require [beat-detector.util :refer :all]
+            [beat-detector.loader :only duration-inst :as loader])
   (:import [beat_detector FFT]))
 
 (def FFTc (FFT. 1024))
@@ -114,11 +115,8 @@
 (declare update-result)
 (defn print-progress
   [pos]
-  (print "Progress:" (comment (/
-                               (long (* 1000.0
-                                        (/ (inc pos)
-                                           100000))) 10.0))
-         pos ; FIXME
+  (print "Progress:"
+         (/ (long (* 1000.0 (/ (inc pos) loader/duration-inst))) 10.0)
          "%\r"))
 
 (defn process

@@ -1,7 +1,8 @@
 (ns beat-detector.loader
   (:require [dynne.sampled-sound :as dynne]))
 
-(def sound (dynne/read-sound "subterranean-athird.wav"))
+(def filename "subterranean-chorus")
+(def sound (dynne/read-sound (str "wavs/" filename ".wav")))
 (def raw-data (dynne/chunks sound 44100))
 (def n-hist 44032)
 (def n-inst 1024)
