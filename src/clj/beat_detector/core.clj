@@ -2,7 +2,8 @@
   (:require [dynne.sampled-sound :as dynne]
             [beat-detector.util :refer :all]
             [beat-detector.simplebd :only start :as simplebd]
-            [beat-detector.freqbd :only start :as freqbd]))
+            [beat-detector.freqbd :only start :as freqbd]
+            [beat-detector.bpm :as bpm]))
 
 (def sound (dynne/read-sound "subterranean-athird.wav"))
 (def raw-data (dynne/chunks sound 44100))
@@ -59,7 +60,7 @@
 (defn majorbd
   "Executes major beat detection algorithm on the given sound source."
   []
-  (determine-bpm (freqbd)))
+  (bpm/determine-bpm (freqbd)))
 
 (defn corr
   []
@@ -67,7 +68,7 @@
 
 (defn interval
   []
-  (estimated-interval (freqbd)))
+  (bpm/estimated-interval (freqbd)))
 
 (defn best-corr
   []

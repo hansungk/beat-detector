@@ -114,11 +114,12 @@
 (declare update-result)
 (defn print-progress
   [pos]
-  (println "Progress:" (/
-                          (long (* 1000.0
-                                   (/ (inc pos)
-                                      beat-detector.core/duration-inst))) 10.0)
-           "%"))
+  (print "Progress:" (comment (/
+                               (long (* 1000.0
+                                        (/ (inc pos)
+                                           100000))) 10.0))
+         pos ; FIXME
+         "%\r"))
 
 (defn process
   "Processes given initialized packet and returns detection result.
