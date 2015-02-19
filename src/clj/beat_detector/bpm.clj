@@ -21,20 +21,22 @@
                         [] index-zip))))
 
 (defn candidate-major-beats
-  "Finds candidate major beats from the given 'pivot' major beat."
+  "Finds the longest major beats candidate chain and constructs them into a
+  vector."
   [times pivot interval]
   (loop [dst [] ^long cand pivot]
     (if (<= cand (+ C (last times)))
       (let [found (find-near cand times)]
-        (if (<= (Math/abs (- cand found)) 4) ; FIXME: 4 is hardcoded
+        (if (<= (Math/abs (- cand found)) 4) ; FIXME hardcoded
           (recur (conj dst found) (+ found interval))
           (recur dst (+ cand interval))))
       dst)))
 
-(defn find-major-beats ; SLOW
-  [times]
+(defn find-major-beats-segment
+  "Tries candidate-major-beats using times as pivots and finds a long enough
+  major beats chain."
+  [times interval]
   (let [pivots (patterned-beats times)
-        interval (estimated-interval times)
         _ (println "All beats:" times)
         _ (println "Patterned beats:" pivots)
         _ (println "Interval: " interval)]
@@ -46,6 +48,18 @@
                   (do
                     (println "Elected candidate:" candidates)
                     (reduced candidates))))) 0 pivots)))
+
+(defn find-major-beats
+  [times]
+  (let [interval (estimated-interval times)
+        segments (reduce (fn [xs y]
+                           (let [xs (vec xs)
+                                 x (if (empty? xs) y (last (last xs)))]
+                             (if (> (- y x) (* 4 interval)) ; New segment
+                               (conj xs (vector y))
+                               (conj (vec (butlast xs))
+                                     (conj (vec (last xs)) y))))) [] times)]
+    (mapcat #(find-major-beats-segment % interval) segments)))
 
 (defn determine-bpm ; SLOW
   [times]
