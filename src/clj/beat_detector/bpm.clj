@@ -12,9 +12,8 @@
 (defn patterned-beats
   "Returns timestamps of patterned beats(those which yield 0 from
   autocorrelation)."
-  [times]
-  (let [interval (estimated-interval times)
-        best-corr (autocorrelate times interval)
+  [times interval]
+  (let [best-corr (autocorrelate times interval)
         index-zip (map vector best-corr (range))]
     (mapv times (reduce (fn [acc [x y]]
                           (if (zero? x) (conj acc y) acc))
@@ -36,7 +35,7 @@
   "Tries candidate-major-beats using times as pivots and finds a long enough
   major beats chain."
   [times interval]
-  (let [pivots (patterned-beats times)
+  (let [pivots (patterned-beats times interval)
         _ (println "All beats:" times)
         _ (println "Patterned beats:" pivots)
         _ (println "Interval: " interval)]
@@ -64,9 +63,21 @@
 (defn determine-bpm ; SLOW
   [times]
   (let [majors (find-major-beats times)
+        interval (estimated-interval times) ; FIXME double computation
+        intervals (map #(- (second %) (first %)) (partition 2 1 majors))]
+    (* 4 (/ (/ (* 60 44100.0) 1024.0)
+            (average
+              (reduce (fn [xs y]
+                        (if (> (- y interval) (* 0.25 interval)) ; New segment
+                          xs
+                          (conj xs y))) [] intervals)))))) ; exact interval
+
+(comment (defn determine-bpm ; SLOW
+  [times]
+  (let [majors (find-major-beats times)
         interval (estimated-interval times)
         ^double duration (- (last majors) (first majors))
         n-beats (Math/round (/ duration interval))
         exact-interval (/ duration n-beats)
         _ (println "Exact interval: " exact-interval)]
-    (* 4 (/ (/ (* 60 44100.0) 1024.0) exact-interval))))
+    (* 4 (/ (/ (* 60 44100.0) 1024.0) exact-interval)))))
