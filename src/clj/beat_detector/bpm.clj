@@ -61,6 +61,8 @@
     (mapcat #(find-major-beats-segment % interval) segments)))
 
 (defn determine-bpm ; SLOW
+  "Determine exact beats per minute from given time, using find-major-beats
+  determination"
   [times]
   (let [majors (find-major-beats times)
         interval (estimated-interval times) ; FIXME double computation
