@@ -49,38 +49,56 @@
                     (reduced candidates))))) 0 pivots)))
 
 (defn find-major-beats
-  [times]
-  (let [interval (estimated-interval times)
-        segments (reduce (fn [xs y]
-                           (if (empty? xs)
-                             [[y]]
-                             (let [x (peek (peek xs))]
-                               (if (> (- y x) (* 4 interval)) ; New segment
-                                 (conj xs (vector y))
-                                 (conj (pop xs)
-                                       (conj (peek xs) y)))))) [] times)]
-    (mapcat #(find-major-beats-segment % interval) segments)))
+  ([times]
+   (find-major-beats times (estimated-interval times)))
+  ([times interval] ; FIXME interval necessary?
+   (let [segments (reduce (fn [xs y]
+                            (if (empty? xs)
+                              [[y]]
+                              (let [x (peek (peek xs))]
+                                (if (> (- y x) (* 4 interval)) ; New segment
+                                  (conj xs (vector y))
+                                  (conj (pop xs)
+                                        (conj (peek xs) y)))))) [] times)]
+     (mapcat #(find-major-beats-segment % interval) segments))))
 
-(defn determine-bpm ; SLOW
+; If the time distance between two adjacent major beats is longer than this
+; constant * interval, the latter major beat is considered as that of a new
+; segment.
+(def const-segment-intv 1.25)
+
+(defn new-segment?
+  [x y]
+  (> (double (- y x)) (* const-segment-intv 1.25)))
+
+(defn determine-bpm
   "Determine exact beats per minute from given time, using find-major-beats
   determination"
-  [times]
-  (let [majors (find-major-beats times)
-        interval (estimated-interval times) ; FIXME double computation
-        intervals (map #(- (second %) (first %)) (partition 2 1 majors))]
-    (* 4 (/ (/ (* 60 44100.0) 1024.0)
-            (average
-              (reduce (fn [xs y]
-                        (if (> y (* 1.25 interval)) ; New segment
-                          xs
-                          (conj xs y))) [] intervals)))))) ; exact interval
+  ([times]
+   (let [interval (estimated-interval times)
+         majors (find-major-beats times interval)]
+     (determine-bpm majors interval)))
+  ([majors interval]
+   (let [intervals (map #(- (second %) (first %)) (partition 2 1 majors))]
+     (interval->bpm
+       (average
+         (reduce (fn [xs y]
+                   (if (> y (* const-segment-intv interval)) ; new segment
+                     xs
+                     (conj xs y)))
+                 [] intervals)))))) ; exact interval
 
-(comment (defn determine-bpm ; SLOW
+(comment (defn sixteenth-beats
+  "Returns timestamps that are sixteenth note beats thoughout the song."
   [times]
-  (let [majors (find-major-beats times)
-        interval (estimated-interval times)
-        ^double duration (- (last majors) (first majors))
-        n-beats (Math/round (/ duration interval))
-        exact-interval (/ duration n-beats)
-        _ (println "Exact interval: " exact-interval)]
-    (* 4 (/ (/ (* 60 44100.0) 1024.0) exact-interval)))))
+  (let [interval (estimated-interval times)
+        majors (find-major-beats times interval)
+        exact-interval (bpm->interval (determine-bpm majors interval))]
+    (reduce (fn [xs y]
+              (let [x (peek xs)]
+                (cond
+                  (empty? xs) [y]
+                  (new-segment? x y)
+                  (conj (into xs (rest (range x y exact-interval))) y)
+                  :else
+                  (rest (range x y (/ (- y x) 8.0))))))))))

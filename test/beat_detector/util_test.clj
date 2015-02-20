@@ -53,3 +53,9 @@
 
 (deftest sumsq-test
   (is (= (sumsq 3 4) 25)))
+
+(deftest interval->bpm-test
+  (is (= (interval->bpm 100) 103.359375)))
+
+(deftest bpm->interval-test
+  (is (= (bpm->interval 103.359375) 100.0)))

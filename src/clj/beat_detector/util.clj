@@ -153,3 +153,11 @@
     (if (<= d 300)
       (recur (inc d) (conj hits (count (filter zero? (autocorrelate times d)))))
       hits)))
+
+(defn ^double interval->bpm
+  [^double interval]
+  (* 4 (/ (/ (* 60 44100.0) 1024.0) interval)))
+
+(defn ^double bpm->interval
+  [^double bpm]
+  (/ (* 44100.0 (/ 60 (/ bpm 4))) 1024.0))
