@@ -52,12 +52,13 @@
   [times]
   (let [interval (estimated-interval times)
         segments (reduce (fn [xs y]
-                           (let [xs (vec xs)
-                                 x (if (empty? xs) y (last (last xs)))]
-                             (if (> (- y x) (* 4 interval)) ; New segment
-                               (conj xs (vector y))
-                               (conj (vec (butlast xs))
-                                     (conj (vec (last xs)) y))))) [] times)]
+                           (if (empty? xs)
+                             [[y]]
+                             (let [x (peek (peek xs))]
+                               (if (> (- y x) (* 4 interval)) ; New segment
+                                 (conj xs (vector y))
+                                 (conj (pop xs)
+                                       (conj (peek xs) y)))))) [] times)]
     (mapcat #(find-major-beats-segment % interval) segments)))
 
 (defn determine-bpm ; SLOW
@@ -70,7 +71,7 @@
     (* 4 (/ (/ (* 60 44100.0) 1024.0)
             (average
               (reduce (fn [xs y]
-                        (if (> (- y interval) (* 0.25 interval)) ; New segment
+                        (if (> y (* 1.25 interval)) ; New segment
                           xs
                           (conj xs y))) [] intervals)))))) ; exact interval
 
