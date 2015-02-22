@@ -36,8 +36,8 @@
   major beats chain."
   [times interval]
   (let [pivots (patterned-beats times interval)
-        _ (println "All beats:" times)
-        _ (println "Patterned beats:" pivots)
+        ;_ (println "All beats:" times)
+        ;_ (println "Patterned beats:" pivots)
         _ (println "Interval: " interval)]
     (reduce (fn [_ x]
               (let [_ (println "Trying" x "as pivot")
@@ -75,9 +75,9 @@
   "Determine exact beats per minute from given time, using find-major-beats
   determination"
   ([times]
-   (let [interval (estimated-interval times)
+   (time (let [interval (estimated-interval times)
          majors (find-major-beats times interval)]
-     (determine-bpm majors interval)))
+     (determine-bpm majors interval))))
   ([majors interval]
    (let [intervals (map #(- (second %) (first %)) (partition 2 1 majors))]
      (interval->bpm

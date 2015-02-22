@@ -132,7 +132,7 @@
         idx (.indexOf diffs (apply min diffs))]
     (nums idx)))
 
-(def ^:constant C 2)
+(def ^:const C 2)
 
 (defn smooth
   [nums]
@@ -141,18 +141,26 @@
 (defn autocorrelate
   "Subtracts each value of nums to the nearest value in nums shifted by d."
   [nums d]
-  (let [snums (shift d nums)]
-    (smooth (map (fn [x] (- x (find-near x nums))) snums))))
+  (do
+   (print "autocorrelate ")
+   (time (let [snums (shift d nums)]
+    (smooth (map (fn [x] (- x (find-near x nums))) snums))))))
 
 (defn corr-zerocounts
   "Returns a vector of counts of zeros from autocorrelations of times.
   Each element at index matches counts of zeros occurred in autocorrelation by
   index."
   [times]
-  (loop [d (inc C) hits (vec (repeat d 0))]
-    (if (<= d 300)
-      (recur (inc d) (conj hits (count (filter zero? (autocorrelate times d)))))
-      hits)))
+  (do
+    (print "corr-zerocounts ")
+    (time (loop [d (inc C) hits (vec (repeat d 0))]
+            (if (<= d 300)
+              (recur (inc d)
+                     (->> (autocorrelate times d)
+                          (filter zero?)
+                          (count)
+                          (conj hits)))
+              hits)))))
 
 (defn ^double interval->bpm
   [^double interval]

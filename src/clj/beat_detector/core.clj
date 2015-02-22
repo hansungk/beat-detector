@@ -12,13 +12,13 @@
   [times]
   (do
     (println "Timeshifting clicks...")
-    (map (partial dynne/timeshift loader/click) times)))
+    (map #(dynne/timeshift loader/click %) times)))
 
 (defn instances->times
   "Converts a vector of beat instance indices to the real time.
   The time is when the beat starts."
   [instances]
-  (map (fn [x] (* (/ loader/n-inst 44100) (dec x))) instances))
+  (map (fn [x] (* (/ loader/n-inst 44100.0) (dec x))) instances))
 
 (defn simplebd
   "Executes simple beat detection algorithm on the given sound source."
@@ -33,12 +33,12 @@
 (defn majorbd
   "Executes major beat detection algorithm on the given sound source."
   []
-  (bpm/find-major-beats (freqbd)))
+  (bpm/find-major-beats (p-freqbd)))
 
 (defn bpm
   "Executes major beat detection algorithm on the given sound source."
   []
-  (bpm/determine-bpm (freqbd)))
+  (bpm/determine-bpm (p-freqbd)))
 
 (def ^:const chunk-overlap 4)
 (defn chunk-raw
@@ -58,7 +58,8 @@
                          (cons 0)
                          (butlast))
         result (pmap #(nth (freqbd/start %) 11) chunk-raw)]
-    (concat (map (fn [x y] (map #(+ % x) y)) start-point result))))
+    (vec (apply concat
+                (map (fn [x y] (map #(+ % x) y)) start-point result)))))
 
 (defn clicks
   "Returns dynne sound objects that contains clicks that sync with
@@ -68,6 +69,7 @@
   (case algorithm
     :simple (reduce dynne/mix (times->clicks (instances->times (simplebd))))
     :freq (reduce dynne/mix (times->clicks (instances->times (freqbd))))
+    :pfreq (reduce dynne/mix (times->clicks (instances->times (p-freqbd))))
     :major (reduce dynne/mix (times->clicks (instances->times (majorbd))))))
 
 (defn save-clicks
@@ -77,6 +79,7 @@
   (let [filename (case flag
                    :simple "wavs/simple.wav"
                    :freq "wavs/freq.wav"
+                   :pfreq "wavs/pfreq.wav"
                    :major "wavs/major.wav")]
     (dynne/save (clicks flag) (do (println "Saving...") filename) 44100)))
 
