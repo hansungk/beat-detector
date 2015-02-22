@@ -40,6 +40,12 @@
   []
   (bpm/determine-bpm (freqbd)))
 
+(defn chunk-raw
+  []
+  (let [n 8
+        size (inc (long (/ loader/chunk-count n)))]
+    (partition-all (inc size) size loader/raw-data)))
+
 (defn clicks
   "Returns dynne sound objects that contains clicks that sync with
   detected beats.

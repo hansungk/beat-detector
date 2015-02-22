@@ -7,6 +7,7 @@
 (def n-hist 44032)
 (def n-inst 1024)
 (def n-freq 64)
+(def chunk-count (count raw-data))
 (def chunk-size (count (ffirst raw-data)))
 (def click (dynne/sinusoid 0.01 840))
 (def duration-smpl
