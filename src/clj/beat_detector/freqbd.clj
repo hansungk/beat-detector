@@ -82,9 +82,8 @@
   "Given energy subbands buffer, executes beat determination algorithm to each
   subbands. A beat is detected in a subband when its energy is higher than the
   average energy of that subband times C (default: 250)."
-  [packet]
-  (let [buffer (:buffer packet)
-        tails (map last buffer)
+  [{buffer :buffer}]
+  (let [tails (map last buffer)
         avgs (map average buffer)
         variances (map variance-avg buffer)
         C 3.0
@@ -97,20 +96,18 @@
 
 (defn initialize
   "Factory function that returns an initialized Packet."
-  [packet]
-  (if (empty? (:raw packet)) ; If raw is empty, return nil
+  [{raw :raw n-inst :n-inst n-hist :n-hist n-freq :n-freq :as packet}]
+  (if (empty? raw) ; If raw is empty, return nil
     nil
-    (let [{raw :raw n-inst :n-inst n-hist :n-hist n-freq :n-freq} packet
-          new-buffer (generate-energy-subbands-buffer raw n-inst n-hist n-freq)
+    (let [new-buffer (generate-energy-subbands-buffer raw n-inst n-hist n-freq)
           rest-raw (drop-raw n-hist raw)]
       (assoc packet :buffer new-buffer :raw rest-raw :pos (/ n-hist n-inst)))))
 
 (defn reload
   "Reloads buffer of packet with new energy subbands value of 1024 samples from
   raw, preparing the packet for the next processing step."
-  [packet]
-  (let [{buffer :buffer raw :raw pos :pos n-inst :n-inst n-freq :n-freq} packet
-        next-buffer (next-energy-subbands-buffer buffer raw n-inst n-freq)
+  [{raw :raw buffer :buffer pos :pos n-inst :n-inst n-hist :n-hist n-freq :n-freq :as packet}]
+  (let [next-buffer (next-energy-subbands-buffer buffer raw n-inst n-freq)
         rest-raw (drop-raw n-inst raw)]
     (assoc packet :buffer next-buffer :raw rest-raw :pos (inc pos))))
 
@@ -126,15 +123,15 @@
   result is a 2-D vector that consists of detected beat instance indices.  Each
   1-D vectors in the result match with n-freq frequency subbands in the same
   order."
-  [packet result]
-  (if (nil? (second (:raw packet))) ; If raw gets smaller than 1024, FFT becomes
+  [{raw :raw pos :pos :as packet} result]
+  (if (nil? (second raw)) ; If raw gets smaller than 1024, FFT becomes
                                   ; impossible - so simply disregard last chunk
     result
     (recur (reload packet) ; future packet
            (update-result result (determine-beat packet) ; FIXME time later
                           (do
-                            (print-progress (:pos packet))
-                            (:pos packet))))))
+                            (print-progress pos)
+                            pos)))))
 
 (defn- update-result
   "Conjoins result with 'binary' result vector returned from determine-beat."
