@@ -40,11 +40,25 @@
   []
   (bpm/determine-bpm (freqbd)))
 
+(def ^:const chunk-overlap 4)
 (defn chunk-raw
   []
   (let [n 8
         size (inc (long (/ loader/chunk-count n)))]
-    (partition-all (inc size) size loader/raw-data)))
+    (partition-all (+ chunk-overlap size) size loader/raw-data)))
+
+(defn p-freqbd
+  []
+  (let [chunk-raw (chunk-raw)
+        start-point (->> chunk-raw
+                         (map #(/ (* (- (count %) chunk-overlap)
+                                     loader/chunk-size)
+                                  1024.0))
+                         (reductions +)
+                         (cons 0)
+                         (butlast))
+        result (pmap #(nth (freqbd/start %) 11) chunk-raw)]
+    (concat (map (fn [x y] (map #(+ % x) y)) start-point result))))
 
 (defn clicks
   "Returns dynne sound objects that contains clicks that sync with

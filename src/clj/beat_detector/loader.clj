@@ -1,7 +1,7 @@
 (ns beat-detector.loader
   (:require [dynne.sampled-sound :as dynne]))
 
-(def filename "closer-start")
+(def filename "sample")
 (def sound (dynne/read-sound (str "wavs/" filename ".wav")))
 (def raw-data (dynne/chunks sound 44100))
 (def n-hist 44032)
