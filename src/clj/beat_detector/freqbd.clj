@@ -1,6 +1,7 @@
 (ns beat-detector.freqbd
   (:require [beat-detector.util :refer :all]
-            [beat-detector.loader :only duration-inst :as loader])
+            [beat-detector.loader :only duration-inst :as loader]
+            [beat-detector.packet :as packet])
   (:import [beat_detector FFT]))
 
 (def FFTc (FFT. 1024))
@@ -142,6 +143,7 @@
 (defn start
   "Starts frequency selected beat detection algorithm using given Packet
   data."
-  [packet]
-  (let [initial-result (vec (repeat (:n-freq packet) []))]
-    (map trim-adjacent (process (initialize packet) initial-result))))
+  [raw]
+  (let [initial-packet (initialize (packet/pack raw))
+        initial-result (vec (repeat (:n-freq initial-packet) []))]
+    (map trim-adjacent (process initial-packet initial-result))))

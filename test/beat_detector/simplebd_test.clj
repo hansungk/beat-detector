@@ -1,7 +1,7 @@
 (ns beat-detector.simplebd-test
   (:use [beat-detector.simplebd])
   (:require [clojure.test :refer :all]
-            [beat-detector.core :only ->Packet :as core]))
+            [beat-detector.packet :as packet]))
 
 (def ^:dynamic *raw* '(([1 2 3 4] [0 0 0 0]) ([5 6 7 8] [0 0 0 0])))
 
@@ -33,28 +33,28 @@
 
 (deftest initialize-test
   (testing "general"
-    (let [packet (core/->Packet nil *raw* 0 2 6 nil)
+    (let [packet (packet/pack *raw* 0 2 6 nil)
           {buffer :buffer raw :raw pos :pos} (initialize packet)]
       (is (= buffer [5 25 61]))
       (is (= raw '([[7 8] [0 0]])))
       (is (= pos 3))))
   (testing "when raw is completely consumed"
-    (let [packet (core/->Packet nil *raw* 0 2 8 nil)]
+    (let [packet (packet/pack *raw* 0 2 8 nil)]
       (is (= (take 2 (vals (initialize packet)))
              '([5 25 61 113] ())))))
   (testing "when raw is empty"
-    (let [packet (core/->Packet nil [] 0 2 8 nil)]
+    (let [packet (packet/pack [] 0 2 8 nil)]
       (is (nil? (initialize packet))))))
 
 (deftest reload-test
   (testing "general"
-      (let [packet (initialize (core/->Packet nil *raw* 0 2 4 nil))
+      (let [packet (initialize (packet/pack *raw* 0 2 4 nil))
             {buffer :buffer raw :raw pos :pos} (reload packet)]
         (is (= buffer [25 61]))
         (is (= raw '([[7 8] [0 0]])))
         (is (= pos (inc (/ 4 2))))))
   (testing "when raw depletes on update"
-      (let [packet (initialize (core/->Packet nil *raw* 0 2 6 nil))
+      (let [packet (initialize (packet/pack *raw* 0 2 6 nil))
             {buffer :buffer raw :raw pos :pos} (reload packet)]
         (is (= buffer [25 61 113]))
         (is (= raw '()))

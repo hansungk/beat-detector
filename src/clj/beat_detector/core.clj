@@ -6,19 +6,6 @@
             [beat-detector.freqbd :only start :as freqbd]
             [beat-detector.bpm :as bpm]))
 
-; A Packet is a bundle data that contains all the necessary informations
-; that it can be immediately processed by beat detection; i.e. current
-; energy history buffer, raw datas that appends those stored in energy
-; buffer, position of current instance, num of samples in one instance,
-; num of samples in one sound history buffer, and num of frequency
-; subbands.
-(defrecord Packet [buffer raw pos n-inst n-hist n-freq])
-
-(defn testpacket
-  "Returns uninitialized Packet object for testing."
-  []
-  (->Packet nil loader/raw-data nil loader/n-inst loader/n-hist loader/n-freq))
-
 (defn times->clicks
   "Converts a vector of beat timestamps to dynne sound objects.
   Clicks are 840Hz sinusoidal waves of 0.01sec duration."
@@ -36,16 +23,12 @@
 (defn simplebd
   "Executes simple beat detection algorithm on the given sound source."
   []
-  (let [packet
-        (->Packet nil loader/raw-data nil loader/n-inst loader/n-hist nil)]
-    (simplebd/start packet)))
+  (simplebd/start loader/raw-data))
 
 (defn freqbd
   "Executes frequency beat detection algorithm on the given sound source."
   []
-  (let [packet
-        (->Packet nil loader/raw-data nil loader/n-inst loader/n-hist loader/n-freq)]
-    (nth (freqbd/start packet) 11))) ; 1~7: 0~43Hz 8~13: 43~86Hz
+  (nth (freqbd/start loader/raw-data) 11)) ; 1~7: 0~43Hz 8~13: 43~86Hz
 
 (defn majorbd
   "Executes major beat detection algorithm on the given sound source."
@@ -56,18 +39,6 @@
   "Executes major beat detection algorithm on the given sound source."
   []
   (bpm/determine-bpm (freqbd)))
-
-(defn corr
-  []
-  (corr-zerocounts (freqbd)))
-
-(defn interval
-  []
-  (bpm/estimated-interval (freqbd)))
-
-(defn best-corr
-  []
-  (autocorrelate (freqbd) (interval)))
 
 (defn clicks
   "Returns dynne sound objects that contains clicks that sync with
