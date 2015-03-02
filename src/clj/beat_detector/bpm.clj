@@ -38,14 +38,13 @@
   (let [pivots (patterned-beats times interval)
         ;_ (println "All beats:" times)
         ;_ (println "Patterned beats:" pivots)
-        _ (println "Interval: " interval)]
+        ]
     (reduce (fn [_ x]
-              (let [_ (println "Trying" x "as pivot")
-                    candidates (candidate-major-beats times x interval)]
+              (let [candidates (candidate-major-beats times x interval)]
                 (if (< (count candidates) (/ (count times) 10))
-                  (println "Too short candidates:" candidates)
+                  nil
                   (do
-                    (println "Elected candidate:" candidates)
+                    (println "Major beats:" candidates)
                     (reduced candidates))))) 0 pivots)))
 
 (defn find-major-beats
@@ -75,9 +74,9 @@
   "Determine exact beats per minute from given time, using find-major-beats
   determination"
   ([times]
-   (time (let [interval (estimated-interval times)
+   (let [interval (estimated-interval times)
          majors (find-major-beats times interval)]
-     (determine-bpm majors interval))))
+     (determine-bpm majors interval)))
   ([majors interval]
    (let [intervals (map #(- (second %) (first %)) (partition 2 1 majors))]
      (interval->bpm

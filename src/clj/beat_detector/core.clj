@@ -20,26 +20,6 @@
   [instances]
   (map (fn [x] (* (/ loader/n-inst 44100.0) (dec x))) instances))
 
-(defn simplebd
-  "Executes simple beat detection algorithm on the given sound source."
-  []
-  (simplebd/start loader/raw-data))
-
-(defn freqbd
-  "Executes frequency beat detection algorithm on the given sound source."
-  []
-  (nth (freqbd/start loader/raw-data) 11)) ; 1~7: 0~43Hz 8~13: 43~86Hz
-
-(defn majorbd
-  "Executes major beat detection algorithm on the given sound source."
-  []
-  (bpm/find-major-beats (p-freqbd)))
-
-(defn bpm
-  "Executes major beat detection algorithm on the given sound source."
-  []
-  (bpm/determine-bpm (p-freqbd)))
-
 (def ^:const chunk-overlap 4)
 (defn chunk-raw
   []
@@ -60,6 +40,26 @@
         result (pmap #(nth (freqbd/start %) 11) chunk-raw)]
     (vec (apply concat
                 (map (fn [x y] (map #(+ % x) y)) start-point result)))))
+
+(defn simplebd
+  "Executes simple beat detection algorithm on the given sound source."
+  []
+  (simplebd/start loader/raw-data))
+
+(defn freqbd
+  "Executes frequency beat detection algorithm on the given sound source."
+  []
+  (nth (freqbd/start loader/raw-data) 11)) ; 1~7: 0~43Hz 8~13: 43~86Hz
+
+(defn majorbd
+  "Executes major beat detection algorithm on the given sound source."
+  []
+  (bpm/find-major-beats (p-freqbd)))
+
+(defn bpm
+  "Executes major beat detection algorithm on the given sound source."
+  []
+  (bpm/determine-bpm (p-freqbd)))
 
 (defn clicks
   "Returns dynne sound objects that contains clicks that sync with

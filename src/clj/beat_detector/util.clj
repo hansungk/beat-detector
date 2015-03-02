@@ -141,10 +141,8 @@
 (defn autocorrelate
   "Subtracts each value of nums to the nearest value in nums shifted by d."
   [nums d]
-  (do
-   (print "autocorrelate ")
-   (time (let [snums (shift d nums)]
-    (smooth (map (fn [x] (- x (find-near x nums))) snums))))))
+  (let [snums (shift d nums)]
+    (smooth (map (fn [x] (- x (find-near x nums))) snums))))
 
 (defn corr-zerocounts
   "Returns a vector of counts of zeros from autocorrelations of times.
