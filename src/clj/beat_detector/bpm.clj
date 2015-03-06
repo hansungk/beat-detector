@@ -50,7 +50,7 @@
 (defn find-major-beats
   ([times]
    (find-major-beats times (estimated-interval times)))
-  ([times interval] ; FIXME interval necessary?
+  ([times interval]
    (let [segments (reduce (fn [xs y]
                             (if (empty? xs)
                               [[y]]
